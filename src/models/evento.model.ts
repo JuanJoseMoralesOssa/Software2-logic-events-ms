@@ -1,6 +1,6 @@
-import {Entity, model, property, belongsTo, hasMany} from '@loopback/repository';
-import {Organizador} from './organizador.model';
+import {belongsTo, Entity, hasMany, model, property} from '@loopback/repository';
 import {Inscripcion} from './inscripcion.model';
+import {Organizador} from './organizador.model';
 
 @model()
 export class Evento extends Entity {
@@ -52,11 +52,6 @@ export class Evento extends Entity {
   })
   numeroAsistentes?: number;
 
-  @property({
-    type: 'number',
-    required: true,
-  })
-  idOrganizador: number;
 
   @belongsTo(() => Organizador)
   organizadorId: number;

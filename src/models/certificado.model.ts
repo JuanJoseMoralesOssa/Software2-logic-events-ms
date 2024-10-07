@@ -1,4 +1,4 @@
-import {Entity, model, property, hasOne} from '@loopback/repository';
+import {Entity, hasOne, model, property} from '@loopback/repository';
 import {Inscripcion} from './inscripcion.model';
 
 @model()
@@ -9,12 +9,6 @@ export class Certificado extends Entity {
     generated: true,
   })
   id?: number;
-
-  @property({
-    type: 'number',
-    required: true,
-  })
-  idInscripcion: number;
 
   @property({
     type: 'string',

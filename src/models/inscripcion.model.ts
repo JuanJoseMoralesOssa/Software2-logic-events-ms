@@ -1,10 +1,10 @@
-import {Entity, model, property, belongsTo, hasOne, hasMany} from '@loopback/repository';
-import {Evento} from './evento.model';
-import {Participante} from './participante.model';
-import {Feedback} from './feedback.model';
+import {belongsTo, Entity, hasMany, hasOne, model, property} from '@loopback/repository';
 import {Certificado} from './certificado.model';
+import {Evento} from './evento.model';
+import {Feedback} from './feedback.model';
 import {Notificacion} from './notificacion.model';
 import {NotificacionxInscripcion} from './notificacionx-inscripcion.model';
+import {Participante} from './participante.model';
 
 @model()
 export class Inscripcion extends Entity {
@@ -14,12 +14,6 @@ export class Inscripcion extends Entity {
     generated: true,
   })
   id?: number;
-
-  @property({
-    type: 'number',
-    required: true,
-  })
-  idEvento: number;
 
   @property({
     type: 'date',

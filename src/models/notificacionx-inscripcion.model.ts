@@ -11,18 +11,6 @@ export class NotificacionxInscripcion extends Entity {
 
   @property({
     type: 'number',
-    required: true,
-  })
-  idNotificacion: number;
-
-  @property({
-    type: 'number',
-    required: true,
-  })
-  idInscripcion: number;
-
-  @property({
-    type: 'number',
   })
   inscripcionId?: number;
 

@@ -1,4 +1,4 @@
-import {Entity, model, property, hasMany} from '@loopback/repository';
+import {Entity, hasMany, model, property} from '@loopback/repository';
 import {Evento} from './evento.model';
 
 @model()
@@ -20,6 +20,24 @@ export class Organizador extends Entity {
     type: 'string',
   })
   facultad?: string;
+
+  @property({
+    type: 'string',
+    required: true,
+  })
+  nombre: string;
+
+  @property({
+    type: 'string',
+    required: true,
+  })
+  correo: string;
+
+  @property({
+    type: 'string',
+    required: true,
+  })
+  telefono: string;
 
   @hasMany(() => Evento)
   eventos: Evento[];
