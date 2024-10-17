@@ -6,7 +6,38 @@ import {Notificacion} from './notificacion.model';
 import {NotificacionxInscripcion} from './notificacionx-inscripcion.model';
 import {Participante} from './participante.model';
 
-@model()
+@model(
+  {
+    settings: {
+      foreignKeys: {
+        fk_evento_id: {
+          name: 'fk_evento_id_inscripcion',
+          entity: 'Evento',
+          entityKey: 'id',
+          foreignKey: 'eventoId',
+        },
+        fk_participante_id: {
+          name: 'fk_participante_id_inscripcion',
+          entity: 'Participante',
+          entityKey: 'id',
+          foreignKey: 'participanteId',
+        },
+        fk_feedback_id: {
+          name: 'fk_feedback_id_inscripcion',
+          entity: 'Feedback',
+          entityKey: 'id',
+          foreignKey: 'feedbackId',
+        },
+        fk_certificado_id: {
+          name: 'fk_certificado_id_inscripcion',
+          entity: 'Certificado',
+          entityKey: 'id',
+          foreignKey: 'certificadoId',
+        },
+      },
+    },
+  },
+)
 export class Inscripcion extends Entity {
   @property({
     type: 'number',
