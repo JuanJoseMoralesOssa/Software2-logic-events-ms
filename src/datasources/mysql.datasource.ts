@@ -8,8 +8,8 @@ const config = {
   host: 'localhost',
   port: 3306,
   user: 'root',
-  password: '1234',
-  database: 'soft2proyecto'
+  password: 'toor',
+  database: 'soft2proyecto',
 };
 
 // Observe application's life cycle to disconnect the datasource when

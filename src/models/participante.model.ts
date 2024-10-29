@@ -14,7 +14,23 @@ export class Participante extends Entity {
     type: 'string',
     required: true,
   })
-  nombre: string;
+  primerNombre: string;
+
+  @property({
+    type: 'string',
+  })
+  segundoNombre?: string;
+
+  @property({
+    type: 'string',
+    required: true,
+  })
+  primerApellido: string;
+
+  @property({
+    type: 'string',
+  })
+  segundoApellido?: string;
 
   @property({
     type: 'string',
@@ -26,7 +42,7 @@ export class Participante extends Entity {
     type: 'string',
     required: true,
   })
-  telefono: string;
+  celular: string;
 
   @hasMany(() => Inscripcion)
   inscripciones: Inscripcion[];

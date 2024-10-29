@@ -12,12 +12,6 @@ export class Organizador extends Entity {
 
   @property({
     type: 'string',
-    required: true,
-  })
-  rol: string;
-
-  @property({
-    type: 'string',
   })
   facultad?: string;
 
@@ -25,7 +19,23 @@ export class Organizador extends Entity {
     type: 'string',
     required: true,
   })
-  nombre: string;
+  primerNombre: string;
+
+  @property({
+    type: 'string',
+  })
+  segundoNombre?: string;
+
+  @property({
+    type: 'string',
+    required: true,
+  })
+  primerApellido: string;
+
+  @property({
+    type: 'string',
+  })
+  segundoApellido?: string;
 
   @property({
     type: 'string',
@@ -37,7 +47,7 @@ export class Organizador extends Entity {
     type: 'string',
     required: true,
   })
-  telefono: string;
+  celular: string;
 
   @hasMany(() => Evento)
   eventos: Evento[];
