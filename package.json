@@ -57,6 +57,7 @@
     "@loopback/service-proxy": "^7.0.6",
     "logic-events-ms": "file:",
     "loopback-connector-mysql": "^7.0.14",
+    "parse-bearer-token": "^1.0.1",
     "tslib": "^2.0.0"
   },
   "devDependencies": {

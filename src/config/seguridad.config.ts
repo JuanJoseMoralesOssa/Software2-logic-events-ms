@@ -1,15 +1,16 @@
 export namespace SeguridadConfig {
-  // export const keyJWT = process.env.SECRET_PASSWORD_JWT;
-  // export const userMenuId: string = '640e0cf85e42613f78309e4c'; // id del usuario menu
-  // export const rolMenuId: string = '640e0d055e42613f78309e4d'; // id del rol menu
-  // export const permissionMenuId: string = '6430cfb6f0dcd12f00a9e80d'; // id del los permisos menu
-  // export const listAction = 'list';
-  // export const saveAction = 'save';
-  // export const editAction = 'edit';
-  // export const deleteAction = 'delete';
-  // export const downloadAction = 'download';
-  // export const mongodbConnectionString = process.env.CONNECTION_STRING_MONGODB;
-  // export const UserPublicRole = "64519d95a3cbbe48605bc57e";
-  // export const recaptchaKeyWebSite = process.env.RecaptchaKeyWebSite;
-  // export const recaptchaSecretKey = process.env.RecaptchaSecretKey;
+  export const participantMenuId = '67229e63344bc057986f9f36';
+  export const organizerMenuId = '67229e70344bc057986f9f37';
+  export const certificateMenuId = '67229ea0344bc057986f9f38';
+  export const userMenuId: string = '6707fc2a82f9cb570086f431'; // id del usuario menu
+  export const listAction = 'list';
+  export const saveAction = 'save';
+  export const editAction = 'edit';
+  export const deleteAction = 'delete';
+  export const downloadAction = 'download';
+  export const securityMicroserviceLink: string = 'http://localhost:3001';
+  export const adminRole: string = '671718501457e533c082e690';
+  export const participantRole: string = '67229cc0344bc057986f9f33';
+  export const publicUserRole: string = '67229d08344bc057986f9f35';
+  export const organizerRole: string = '67229cce344bc057986f9f34';
 }
