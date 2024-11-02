@@ -1,21 +1,25 @@
-import {belongsTo, Entity, hasMany, model, property} from '@loopback/repository';
+import {
+  belongsTo,
+  Entity,
+  hasMany,
+  model,
+  property,
+} from '@loopback/repository';
 import {Inscripcion} from './inscripcion.model';
 import {Organizador} from './organizador.model';
 
-@model(
-  {
-    settings: {
-      foreignKeys: {
-        fk_organizador_id: {
-          name: 'fk_organizador_id_evento',
-          entity: 'Organizador',
-          entityKey: 'id',
-          foreignKey: 'organizadorId',
-        },
+@model({
+  settings: {
+    foreignKeys: {
+      fk_organizador_id: {
+        name: 'fk_organizador_id_evento',
+        entity: 'Organizador',
+        entityKey: 'id',
+        foreignKey: 'organizadorId',
       },
     },
   },
-)
+})
 export class Evento extends Entity {
   @property({
     type: 'number',
@@ -28,13 +32,25 @@ export class Evento extends Entity {
     type: 'string',
     required: true,
   })
-  facultad: string;
+  titulo: string;
 
   @property({
     type: 'string',
-    required: true,
+    // required: true,
   })
-  tematica: string;
+  facultad?: string;
+
+  @property({
+    type: 'string',
+    // required: true,
+  })
+  tematica?: string;
+
+  @property({
+    type: 'string',
+    // required: true,
+  })
+  tipoEvento?: string;
 
   @property({
     type: 'date',
@@ -49,12 +65,6 @@ export class Evento extends Entity {
   fechaFinal: string;
 
   @property({
-    type: 'string',
-    required: true,
-  })
-  tipoEvento: string;
-
-  @property({
     type: 'number',
     required: true,
   })
@@ -64,7 +74,6 @@ export class Evento extends Entity {
     type: 'number',
   })
   numeroAsistentes?: number;
-
 
   @belongsTo(() => Organizador)
   organizadorId: number;
