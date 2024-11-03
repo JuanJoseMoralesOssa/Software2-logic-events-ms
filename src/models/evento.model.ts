@@ -75,6 +75,12 @@ export class Evento extends Entity {
   })
   numeroAsistentes?: number;
 
+  @property({
+    type: 'string',
+    required: true,
+  })
+  lugar?: string;
+
   @belongsTo(() => Organizador)
   organizadorId: number;
 

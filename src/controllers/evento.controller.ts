@@ -7,13 +7,14 @@ import {
   Where,
 } from '@loopback/repository';
 import {
-  post,
-  param,
+  del,
   get,
   getModelSchemaRef,
+  HttpErrors,
+  param,
   patch,
+  post,
   put,
-  del,
   requestBody,
   response,
 } from '@loopback/rest';
@@ -27,25 +28,64 @@ export class EventoController {
   ) {}
 
   @post('/evento')
-  @response(200, {
-    description: 'Evento model instance',
-    content: {'application/json': {schema: getModelSchemaRef(Evento)}},
-  })
-  async create(
-    @requestBody({
-      content: {
-        'application/json': {
-          schema: getModelSchemaRef(Evento, {
-            title: 'NewEvento',
-            exclude: ['id'],
-          }),
-        },
+@response(200, {
+  description: 'Evento model instance',
+  content: { 'application/json': { schema: getModelSchemaRef(Evento) } },
+})
+async create(
+  @requestBody({
+    content: {
+      'application/json': {
+        schema: getModelSchemaRef(Evento, {
+          title: 'NewEvento',
+          exclude: ['id', 'numeroAsistentes'], // Ignora 'numeroAsistentes'
+        }),
       },
-    })
-    evento: Omit<Evento, 'id'>,
-  ): Promise<Evento> {
-    return this.eventoRepository.create(evento);
+    },
+  })
+  evento: Omit<Evento, 'id' | 'numeroAsistentes'>, // Eliminar 'numeroAsistentes' del tipo
+): Promise<Evento> {
+  // Verificar conflicto de lugar y horario
+  const conflictingEvents = await this.eventoRepository.find({
+    where: {
+      lugar: evento.lugar,
+      or: [
+        {
+          and: [
+            { fechaInicio: { lte: evento.fechaFinal } },
+            { fechaFinal: { gte: evento.fechaInicio } },
+          ],
+        },
+      ],
+    },
+  });
+
+  if (conflictingEvents.length > 0) {
+    throw new HttpErrors.Conflict('Ya existe un evento en este lugar en el mismo rango de fechas y horas.');
   }
+
+  // Verificar que el organizador no tenga otro evento en el mismo horario
+  const organizerConflicts = await this.eventoRepository.find({
+    where: {
+      organizadorId: evento.organizadorId,
+      or: [
+        {
+          and: [
+            { fechaInicio: { lte: evento.fechaFinal } },
+            { fechaFinal: { gte: evento.fechaInicio } },
+          ],
+        },
+      ],
+    },
+  });
+
+  if (organizerConflicts.length > 0) {
+    throw new HttpErrors.Conflict('Este organizador ya tiene un evento programado en el mismo rango de fechas y horas.');
+  }
+  // Crear el evento si no hay conflictos
+  return this.eventoRepository.create(evento);
+}
+
 
   @get('/evento/count')
   @response(200, {
