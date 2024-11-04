@@ -35,6 +35,11 @@ export class Evento extends Entity {
   titulo: string;
 
   @property({
+    type: 'string'
+  })
+ descripcion?: string;
+
+  @property({
     type: 'string',
     // required: true,
   })
