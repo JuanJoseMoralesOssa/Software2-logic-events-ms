@@ -13,4 +13,6 @@ export namespace SeguridadConfig {
   export const participantRole: string = '67229cc0344bc057986f9f33';
   export const publicUserRole: string = '67229d08344bc057986f9f35';
   export const organizerRole: string = '67229cce344bc057986f9f34';
+  export const mysqlname = process.env.DATABASE;
+  export const mysqlpassword = process.env.PASSWORD;
 }
