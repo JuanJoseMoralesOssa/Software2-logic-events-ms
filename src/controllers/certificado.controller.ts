@@ -7,23 +7,28 @@ import {
   Where,
 } from '@loopback/repository';
 import {
-  post,
-  param,
+  del,
   get,
   getModelSchemaRef,
+  HttpErrors,
+  param,
   patch,
+  post,
   put,
-  del,
   requestBody,
   response,
 } from '@loopback/rest';
 import {Certificado} from '../models';
-import {CertificadoRepository} from '../repositories';
+import {CertificadoRepository, EventoRepository, InscripcionRepository} from '../repositories';
 
 export class CertificadoController {
   constructor(
     @repository(CertificadoRepository)
     public certificadoRepository : CertificadoRepository,
+    @repository(InscripcionRepository)
+    public inscripcionRepository: InscripcionRepository,
+    @repository(EventoRepository)
+    public eventoRepository: EventoRepository,
   ) {}
 
   @post('/certificado')
@@ -44,7 +49,27 @@ export class CertificadoController {
     })
     certificado: Omit<Certificado, 'id'>,
   ): Promise<Certificado> {
-    return this.certificadoRepository.create(certificado);
+    // Validar que la inscripción asociada existe
+    const inscripcionExists = await this.certificadoRepository.inscripcion(certificado.inscripcionId);
+    if (!inscripcionExists) {
+      throw new HttpErrors.NotFound(
+        `La inscripción con ID ${certificado.inscripcionId} no existe.`
+      );
+    }
+    // Crear el certificado
+  const createdCertificado = await this.certificadoRepository.create(certificado);
+
+  // Actualizar el certificadoId en la inscripción
+  await this.inscripcionRepository.updateById(certificado.inscripcionId, {
+    certificadoId: createdCertificado.id,
+  });
+  // Aumentar el numero de asistentes en el evento
+  const inscripcion = await this.inscripcionRepository.findById(certificado.inscripcionId);
+  const evento = await this.eventoRepository.findById(inscripcion.eventoId);
+  await this.eventoRepository.updateById(inscripcion.eventoId, {
+    numeroAsistentes: (evento.numeroAsistentes ?? 0) + 1,
+  });
+  return createdCertificado;
   }
 
   @get('/certificado/count')

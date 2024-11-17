@@ -34,6 +34,11 @@ export class Feedback extends Entity {
   })
   inscripcionId?: number;
 
+  @property({
+    type: 'number',
+  })
+  calificacion?: number;
+
   @hasOne(() => Inscripcion)
   inscripcion: Inscripcion;
 

@@ -7,23 +7,25 @@ import {
   Where,
 } from '@loopback/repository';
 import {
-  post,
-  param,
+  del,
   get,
   getModelSchemaRef,
+  param,
   patch,
+  post,
   put,
-  del,
   requestBody,
   response,
 } from '@loopback/rest';
 import {Feedback} from '../models';
-import {FeedbackRepository} from '../repositories';
+import {FeedbackRepository, InscripcionRepository} from '../repositories';
 
 export class FeedbackController {
   constructor(
     @repository(FeedbackRepository)
     public feedbackRepository : FeedbackRepository,
+    @repository(InscripcionRepository)
+    public inscripcionRepository : InscripcionRepository,
   ) {}
 
   @post('/feedback')
@@ -44,7 +46,13 @@ export class FeedbackController {
     })
     feedback: Omit<Feedback, 'id'>,
   ): Promise<Feedback> {
-    return this.feedbackRepository.create(feedback);
+
+    // Crear el certificado
+    const createdFeedback = await this.feedbackRepository.create(feedback);
+    // Actualizar el feedbackId en la inscripción
+    await this.inscripcionRepository.updateById(feedback.inscripcionId, {certificadoId: createdFeedback.id,});
+
+    return createdFeedback;
   }
 
   @get('/feedback/count')
