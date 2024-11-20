@@ -19,3 +19,4 @@ export * from './notificacionx-inscripcion.controller';
 export * from './notificacion.controller';
 export * from './organizador.controller';
 export * from './participante.controller';
+export * from './codigo-qr.controller';
