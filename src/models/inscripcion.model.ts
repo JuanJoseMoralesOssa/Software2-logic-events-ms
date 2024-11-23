@@ -52,6 +52,12 @@ export class Inscripcion extends Entity {
   })
   fecha: string;
 
+  @property({
+    type: 'string',
+    required: true,
+  })
+  asistencia: string;
+
   @belongsTo(() => Evento)
   eventoId: number;
 

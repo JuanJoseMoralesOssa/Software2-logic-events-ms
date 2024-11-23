@@ -37,7 +37,7 @@ export class Evento extends Entity {
   @property({
     type: 'string'
   })
- descripcion?: string;
+  descripcion?: string;
 
   @property({
     type: 'string',

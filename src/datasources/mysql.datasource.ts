@@ -1,6 +1,5 @@
 import {inject, lifeCycleObserver, LifeCycleObserver} from '@loopback/core';
 import {juggler} from '@loopback/repository';
-import {SeguridadConfig} from '../config/seguridad.config';
 const config = {
   name: 'mysql',
   connector: 'mysql',
@@ -8,8 +7,8 @@ const config = {
   host: 'localhost',
   port: 3306,
   user: 'root',
-  password: SeguridadConfig.mysqlpassword,
-  database: SeguridadConfig.mysqlname,
+  password: "Felipe0903",
+  database: "soft2proyecto",
 };
 
 // Observe application's life cycle to disconnect the datasource when

@@ -3,24 +3,30 @@ import {
 } from '@loopback/repository';
 import {
   get,
+  HttpErrors,
   param,
   response
 } from '@loopback/rest';
-import QRCode from 'qrcode'; // Importamos el paquete qrcode
-import {EventoRepository, ParticipanteRepository} from '../repositories'; // Repositorios necesarios
+import QRCode from 'qrcode';
+import {
+  EventoRepository,
+  InscripcionRepository,
+  ParticipanteRepository
+} from '../repositories';
 
 export class CodigoQrController {
   constructor(
     @repository(ParticipanteRepository)
     public participanteRepository: ParticipanteRepository,
+    @repository(InscripcionRepository)
+    public inscripcionRepository: InscripcionRepository,
     @repository(EventoRepository)
-    public eventoRepository: EventoRepository, // Usamos el repositorio de Evento para obtener los eventos
+    public eventoRepository: EventoRepository,
   ) { }
 
-  // Endpoint para crear un código QR para un participante y un evento
   @get('/codigo-qr/{participanteId}/{eventoId}')
   @response(200, {
-    description: 'Generar código QR con la información del participante y evento',
+    description: 'Generar código QR con información compacta del participante y evento',
     content: {
       'application/json': {
         schema: {
@@ -36,31 +42,51 @@ export class CodigoQrController {
     @param.path.number('participanteId') participanteId: number,
     @param.path.number('eventoId') eventoId: number,
   ): Promise<{qrCode: string}> {
-    // Obtener participante
+    // Validar existencia del participante
     const participante = await this.participanteRepository.findById(participanteId);
-    // Obtener evento
-    const evento = await this.eventoRepository.findById(eventoId);
+    if (!participante) {
+      throw new HttpErrors.NotFound(`Participante con ID ${participanteId} no encontrado.`);
+    }
 
-    // Crear un objeto con la información que será codificada en el QR
+    // Validar existencia del evento
+    const evento = await this.eventoRepository.findById(eventoId);
+    if (!evento) {
+      throw new HttpErrors.NotFound(`Evento con ID ${eventoId} no encontrado.`);
+    }
+
+    // Compactar los datos para el QR
     const data = {
       participante: {
         primerNombre: participante.primerNombre,
         primerApellido: participante.primerApellido,
+        segundoNombre: participante.segundoNombre, // Si existe
+        segundoApellido: participante.segundoApellido, // Si existe
         correo: participante.correo,
-        celular: participante.celular,
       },
       evento: {
         titulo: evento.titulo,
+        descripcion: evento.descripcion, // Información adicional
         lugar: evento.lugar,
         fechaInicio: evento.fechaInicio,
         fechaFinal: evento.fechaFinal,
       },
     };
 
-    // Generar el código QR con la información del participante y evento
+    // Generar código QR
     const qrCode = await QRCode.toDataURL(JSON.stringify(data));
 
-    // Retornar el QR generado como una URL de imagen
+    // Verificar si existe inscripción
+    const inscripcion = await this.inscripcionRepository.findOne({
+      where: {eventoId, participanteId},
+    });
+
+    if (inscripcion) {
+      // Actualizar la inscripción con el QR
+      inscripcion.asistencia = qrCode;
+      await this.inscripcionRepository.updateById(inscripcion.id, inscripcion);
+    }
+
+    // Retornar el código QR generado
     return {qrCode};
   }
 }

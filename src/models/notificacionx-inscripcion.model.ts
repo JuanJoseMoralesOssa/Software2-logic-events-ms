@@ -15,10 +15,10 @@ import {Entity, model, property} from '@loopback/repository';
           entity: 'Notificacion',
           entityKey: 'id',
           foreignKey: 'notificacionId',
+        },
       },
     },
   },
-},
 )
 export class NotificacionxInscripcion extends Entity {
   @property({
