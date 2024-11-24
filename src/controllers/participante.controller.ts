@@ -1,3 +1,4 @@
+import {service} from '@loopback/core';
 import {
   Count,
   CountSchema,
@@ -7,23 +8,27 @@ import {
   Where,
 } from '@loopback/repository';
 import {
-  post,
-  param,
+  del,
   get,
   getModelSchemaRef,
+  param,
   patch,
+  post,
   put,
-  del,
   requestBody,
   response,
 } from '@loopback/rest';
+import {NotificacionesConfig} from '../config/notificaciones.config';
 import {Participante} from '../models';
 import {ParticipanteRepository} from '../repositories';
+import {NotificacionesService} from '../services/notificaciones.service';
 
 export class ParticipanteController {
   constructor(
     @repository(ParticipanteRepository)
     public participanteRepository : ParticipanteRepository,
+    @service(NotificacionesService)
+    public servicioNotificaciones: NotificacionesService,
   ) {}
 
   @post('/participante')
@@ -44,6 +49,25 @@ export class ParticipanteController {
     })
     participante: Omit<Participante, 'id'>,
   ): Promise<Participante> {
+    //enviar correo de bienvenida
+    try {
+      let datos = {
+        correoDestino: participante.correo,
+        nombreDestino: participante.primerNombre + ' ' + participante.primerApellido,
+        asuntoCorreo: "Bienvenida",
+        contenidoCorreo: "Bienvenido a la plataforma de eventos"
+    };
+    let url = NotificacionesConfig.urlNotificationBienvenida;
+      try {
+        this.servicioNotificaciones.EnviarNotificacion(datos, url);
+        console.log('Mensaje aceptado');
+      } catch (error) {
+        console.log('error');
+      }
+    } catch (error) {
+      console.log(error);
+    }
+
     return this.participanteRepository.create(participante);
   }
 
