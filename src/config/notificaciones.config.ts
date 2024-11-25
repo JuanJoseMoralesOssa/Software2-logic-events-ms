@@ -13,7 +13,8 @@ export namespace NotificacionesConfig {
   //   'https://localhost:5258/Notification/send-sms';
   // export const urlNotificationsCredentialsMail: string =
   //   'https://localhost:5258/Notification/credentials-mail';
-  export const urlNotificationBienvenida: string =
-    'http://localhost:5258/Notificaciones/correo_bienvenida';
+    export const urlNotificationBienvenida: string ='http://localhost:5258/Notificaciones/correo_bienvenida';
+  export const urlNotificationCertificado: string ='http://localhost:5258/Notificaciones/enviar-certificado';
+
 
 }

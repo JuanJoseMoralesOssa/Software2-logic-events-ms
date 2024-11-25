@@ -7,18 +7,18 @@ import {
   Where,
 } from '@loopback/repository';
 import {
-  post,
-  param,
+  del,
   get,
   getModelSchemaRef,
+  HttpErrors,
+  param,
   patch,
+  post,
   put,
-  del,
   requestBody,
   response,
 } from '@loopback/rest';
 import {Evento} from '../models';
-import {HttpErrors} from '@loopback/rest';
 import {EventoRepository} from '../repositories';
 
 export class EventoController {

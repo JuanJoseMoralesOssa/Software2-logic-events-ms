@@ -1,3 +1,4 @@
+import {service} from '@loopback/core';
 import {
   Count,
   CountSchema,
@@ -18,8 +19,10 @@ import {
   requestBody,
   response,
 } from '@loopback/rest';
+import {NotificacionesConfig} from '../config/notificaciones.config';
 import {Certificado} from '../models';
 import {CertificadoRepository, EventoRepository, InscripcionRepository} from '../repositories';
+import {NotificacionesService} from '../services';
 
 export class CertificadoController {
   constructor(
@@ -29,6 +32,8 @@ export class CertificadoController {
     public inscripcionRepository: InscripcionRepository,
     @repository(EventoRepository)
     public eventoRepository: EventoRepository,
+    @service(NotificacionesService)
+    public servicioNotificaciones: NotificacionesService,
   ) {}
 
   @post('/certificado')
@@ -69,6 +74,26 @@ export class CertificadoController {
   await this.eventoRepository.updateById(inscripcion.eventoId, {
     numeroAsistentes: (evento.numeroAsistentes ?? 0) + 1,
   });
+  const participante = await this.inscripcionRepository.participante(inscripcion.id);
+  const organizador = await this.eventoRepository.organizador(evento.id);
+  // Retornar el certificado creado
+  try{
+    let datos = {
+      correoDestino: participante.correo,
+      nombreDestino: participante.primerNombre + ' ' + participante.primerApellido,
+      asuntoCorreo: 'Certificado de asistencia',
+      contenidoCorreo: `${evento.descripcion}`+" de la facultad de "+ `${evento.facultad}` + " que dio comienzo el " + `${evento.fechaInicio}` + " hasta el " + `${evento.fechaFinal}` + " en " + `${evento.lugar}` + " organizado por " + `${organizador.primerNombre}` + " " + `${organizador.primerApellido}`,
+    }
+    let url = NotificacionesConfig.urlNotificationCertificado;
+    console.log(datos);
+    try{
+      this.servicioNotificaciones.EnviarNotificacion(datos,url);
+    }catch(error){
+      console.error('Error al enviar notificación: ' + error.message);
+    }
+  }catch(error){
+    console.error('Error al enviar notificación: ' + error.message);
+  }
   return createdCertificado;
   }
 
