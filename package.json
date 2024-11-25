@@ -57,6 +57,7 @@
     "@loopback/rest-explorer": "^7.0.6",
     "@loopback/security": "^0.11.7",
     "@loopback/service-proxy": "^7.0.6",
+    "axios": "^1.7.7",
     "dotenv": "^16.4.5",
     "logic-events-ms": "file:",
     "loopback-connector-mysql": "^7.0.14",
