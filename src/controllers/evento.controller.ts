@@ -7,94 +7,97 @@ import {
   Where,
 } from '@loopback/repository';
 import {
-  post,
-  param,
+  del,
   get,
   getModelSchemaRef,
+  HttpErrors,
+  param,
   patch,
+  post,
   put,
-  del,
   requestBody,
   response,
 } from '@loopback/rest';
 import {Evento} from '../models';
-import {HttpErrors} from '@loopback/rest';
-import {EventoRepository} from '../repositories';
+import {EventoRepository, InscripcionRepository} from '../repositories';
 
 export class EventoController {
   constructor(
     @repository(EventoRepository)
-    public eventoRepository : EventoRepository,
+    public eventoRepository: EventoRepository,
+    @repository(InscripcionRepository)
+    public inscripcionRepository: InscripcionRepository,
   ) {}
 
   @post('/evento')
-@response(200, {
-  description: 'Evento model instance',
-  content: { 'application/json': { schema: getModelSchemaRef(Evento) } },
-})
-async create(
-  @requestBody({
-    content: {
-      'application/json': {
-        schema: getModelSchemaRef(Evento, {
-          title: 'NewEvento',
-          exclude: ['id', 'numeroAsistentes'], // Ignora 'numeroAsistentes'
-        }),
-      },
-    },
+  @response(200, {
+    description: 'Evento model instance',
+    content: {'application/json': {schema: getModelSchemaRef(Evento)}},
   })
-  evento: Omit<Evento, 'id' | 'numeroAsistentes'>, // Eliminar 'numeroAsistentes' del tipo
-): Promise<Evento> {
-  // Verificar conflicto de lugar y horario
-  const conflictingEvents = await this.eventoRepository.find({
-    where: {
-      lugar: evento.lugar,
-      or: [
-        {
-          and: [
-            { fechaInicio: { lte: evento.fechaFinal } },
-            { fechaFinal: { gte: evento.fechaInicio } },
-          ],
+  async create(
+    @requestBody({
+      content: {
+        'application/json': {
+          schema: getModelSchemaRef(Evento, {
+            title: 'NewEvento',
+            exclude: ['id', 'numeroAsistentes'], // Ignora 'numeroAsistentes'
+          }),
         },
-      ],
-    },
-  });
+      },
+    })
+    evento: Omit<Evento, 'id' | 'numeroAsistentes'>, // Eliminar 'numeroAsistentes' del tipo
+  ): Promise<Evento> {
+    // Verificar conflicto de lugar y horario
+    const conflictingEvents = await this.eventoRepository.find({
+      where: {
+        lugar: evento.lugar,
+        or: [
+          {
+            and: [
+              {fechaInicio: {lte: evento.fechaFinal}},
+              {fechaFinal: {gte: evento.fechaInicio}},
+            ],
+          },
+        ],
+      },
+    });
 
-  if (conflictingEvents.length > 0) {
-    throw new HttpErrors.Conflict('Ya existe un evento en este lugar en el mismo rango de fechas y horas.');
+    if (conflictingEvents.length > 0) {
+      throw new HttpErrors.Conflict(
+        'Ya existe un evento en este lugar en el mismo rango de fechas y horas.',
+      );
+    }
+
+    // Verificar que el organizador no tenga otro evento en el mismo horario
+    const organizerConflicts = await this.eventoRepository.find({
+      where: {
+        organizadorId: evento.organizadorId,
+        or: [
+          {
+            and: [
+              {fechaInicio: {lte: evento.fechaFinal}},
+              {fechaFinal: {gte: evento.fechaInicio}},
+            ],
+          },
+        ],
+      },
+    });
+
+    if (organizerConflicts.length > 0) {
+      throw new HttpErrors.Conflict(
+        'Este organizador ya tiene un evento programado en el mismo rango de fechas y horas.',
+      );
+    }
+    // Crear el evento si no hay conflictos
+    return this.eventoRepository.create(evento);
   }
-
-  // Verificar que el organizador no tenga otro evento en el mismo horario
-  const organizerConflicts = await this.eventoRepository.find({
-    where: {
-      organizadorId: evento.organizadorId,
-      or: [
-        {
-          and: [
-            { fechaInicio: { lte: evento.fechaFinal } },
-            { fechaFinal: { gte: evento.fechaInicio } },
-          ],
-        },
-      ],
-    },
-  });
-
-  if (organizerConflicts.length > 0) {
-    throw new HttpErrors.Conflict('Este organizador ya tiene un evento programado en el mismo rango de fechas y horas.');
-  }
-  // Crear el evento si no hay conflictos
-  return this.eventoRepository.create(evento);
-}
-
 
   @get('/evento/count')
   @response(200, {
     description: 'Evento model count',
     content: {'application/json': {schema: CountSchema}},
   })
-  async count(
-    @param.where(Evento) where?: Where<Evento>,
-  ): Promise<Count> {
+  async count(@param.where(Evento) where?: Where<Evento>): Promise<Count> {
     return this.eventoRepository.count(where);
   }
 
@@ -110,9 +113,7 @@ async create(
       },
     },
   })
-  async find(
-    @param.filter(Evento) filter?: Filter<Evento>,
-  ): Promise<Evento[]> {
+  async find(@param.filter(Evento) filter?: Filter<Evento>): Promise<Evento[]> {
     return this.eventoRepository.find(filter);
   }
 
@@ -146,7 +147,8 @@ async create(
   })
   async findById(
     @param.path.number('id') id: number,
-    @param.filter(Evento, {exclude: 'where'}) filter?: FilterExcludingWhere<Evento>
+    @param.filter(Evento, {exclude: 'where'})
+    filter?: FilterExcludingWhere<Evento>,
   ): Promise<Evento> {
     return this.eventoRepository.findById(id, filter);
   }
@@ -185,6 +187,13 @@ async create(
     description: 'Evento DELETE success',
   })
   async deleteById(@param.path.number('id') id: number): Promise<void> {
+    // Eliminar inscripciones antes de eliminar el evento
+    const inscripciones = await this.inscripcionRepository.find({
+      where: {eventoId: id},
+    });
+    for (const inscripcion of inscripciones) {
+      await this.inscripcionRepository.deleteById(inscripcion.id!);
+    }
     await this.eventoRepository.deleteById(id);
   }
 }

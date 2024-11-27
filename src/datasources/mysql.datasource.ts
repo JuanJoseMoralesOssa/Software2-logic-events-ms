@@ -8,7 +8,7 @@ const config = {
   host: 'localhost',
   port: 3306,
   user: 'root',
-  password: 'root',
+  password: 'toor',
   database: 'soft2proyecto',
 };
 
@@ -17,8 +17,10 @@ const config = {
 // gracefully. The `stop()` method is inherited from `juggler.DataSource`.
 // Learn more at https://loopback.io/doc/en/lb4/Life-cycle.html
 @lifeCycleObserver('datasource')
-export class MysqlDataSource extends juggler.DataSource
-  implements LifeCycleObserver {
+export class MysqlDataSource
+  extends juggler.DataSource
+  implements LifeCycleObserver
+{
   static dataSourceName = 'mysql';
   static readonly defaultConfig = config;
 

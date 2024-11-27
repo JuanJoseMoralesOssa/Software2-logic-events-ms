@@ -7,23 +7,31 @@ import {
   Where,
 } from '@loopback/repository';
 import {
-  post,
-  param,
+  del,
   get,
   getModelSchemaRef,
+  param,
   patch,
+  post,
   put,
-  del,
   requestBody,
   response,
 } from '@loopback/rest';
 import {Notificacion} from '../models';
-import {NotificacionRepository} from '../repositories';
+import {
+  InscripcionRepository,
+  NotificacionRepository,
+  NotificacionxInscripcionRepository,
+} from '../repositories';
 
 export class NotificacionController {
   constructor(
     @repository(NotificacionRepository)
-    public notificacionRepository : NotificacionRepository,
+    public notificacionRepository: NotificacionRepository,
+    @repository(InscripcionRepository)
+    public inscripcionRepository: InscripcionRepository,
+    @repository(NotificacionxInscripcionRepository)
+    public notificacionxInscripcionRepository: NotificacionxInscripcionRepository,
   ) {}
 
   @post('/notificacion')
@@ -106,7 +114,8 @@ export class NotificacionController {
   })
   async findById(
     @param.path.number('id') id: number,
-    @param.filter(Notificacion, {exclude: 'where'}) filter?: FilterExcludingWhere<Notificacion>
+    @param.filter(Notificacion, {exclude: 'where'})
+    filter?: FilterExcludingWhere<Notificacion>,
   ): Promise<Notificacion> {
     return this.notificacionRepository.findById(id, filter);
   }
@@ -145,6 +154,20 @@ export class NotificacionController {
     description: 'Notificacion DELETE success',
   })
   async deleteById(@param.path.number('id') id: number): Promise<void> {
+    const notificacion = await this.notificacionRepository.findById(id);
+    const notificacionesxInscripcion =
+      await this.notificacionxInscripcionRepository.find({
+        where: {
+          notificacionId: id,
+        },
+      });
+
+    for (const notificacionxInscripcion of notificacionesxInscripcion) {
+      await this.notificacionxInscripcionRepository.deleteById(
+        notificacionxInscripcion.id!,
+      );
+    }
+
     await this.notificacionRepository.deleteById(id);
   }
 }

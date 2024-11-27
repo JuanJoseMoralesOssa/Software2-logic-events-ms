@@ -20,13 +20,15 @@ import {
 } from '@loopback/rest';
 import {NotificacionesConfig} from '../config/notificaciones.config';
 import {Participante} from '../models';
-import {ParticipanteRepository} from '../repositories';
+import {InscripcionRepository, ParticipanteRepository} from '../repositories';
 import {NotificacionesService} from '../services/notificaciones.service';
 
 export class ParticipanteController {
   constructor(
     @repository(ParticipanteRepository)
-    public participanteRepository : ParticipanteRepository,
+    public participanteRepository: ParticipanteRepository,
+    @repository(InscripcionRepository)
+    public inscripcionRepository: InscripcionRepository,
     @service(NotificacionesService)
     public servicioNotificaciones: NotificacionesService,
   ) {}
@@ -53,11 +55,12 @@ export class ParticipanteController {
     try {
       let datos = {
         correoDestino: participante.correo,
-        nombreDestino: participante.primerNombre + ' ' + participante.primerApellido,
-        asuntoCorreo: "Bienvenida",
-        contenidoCorreo: "Bienvenido a la plataforma de eventos"
-    };
-    let url = NotificacionesConfig.urlNotificationBienvenida;
+        nombreDestino:
+          participante.primerNombre + ' ' + participante.primerApellido,
+        asuntoCorreo: 'Bienvenida',
+        contenidoCorreo: 'Bienvenido a la plataforma de eventos',
+      };
+      let url = NotificacionesConfig.urlNotificationBienvenida;
       try {
         this.servicioNotificaciones.EnviarNotificacion(datos, url);
         console.log('Mensaje aceptado');
@@ -130,7 +133,8 @@ export class ParticipanteController {
   })
   async findById(
     @param.path.number('id') id: number,
-    @param.filter(Participante, {exclude: 'where'}) filter?: FilterExcludingWhere<Participante>
+    @param.filter(Participante, {exclude: 'where'})
+    filter?: FilterExcludingWhere<Participante>,
   ): Promise<Participante> {
     return this.participanteRepository.findById(id, filter);
   }
@@ -169,6 +173,12 @@ export class ParticipanteController {
     description: 'Participante DELETE success',
   })
   async deleteById(@param.path.number('id') id: number): Promise<void> {
+    const inscripciones = await this.inscripcionRepository.find({
+      where: {eventoId: id},
+    });
+    for (const inscripcion of inscripciones) {
+      await this.inscripcionRepository.deleteById(inscripcion.id!);
+    }
     await this.participanteRepository.deleteById(id);
   }
 }

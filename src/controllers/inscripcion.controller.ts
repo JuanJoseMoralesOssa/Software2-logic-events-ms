@@ -1,3 +1,4 @@
+import {service} from '@loopback/core';
 import {
   Count,
   CountSchema,
@@ -19,14 +20,32 @@ import {
   response,
 } from '@loopback/rest';
 import {Inscripcion} from '../models';
-import {EventoRepository, InscripcionRepository} from '../repositories';
+import {
+  CertificadoRepository,
+  EventoRepository,
+  FeedbackRepository,
+  InscripcionRepository,
+  NotificacionRepository,
+  NotificacionxInscripcionRepository,
+} from '../repositories';
+import {LogicaNegocioService} from '../services';
 
 export class InscripcionController {
   constructor(
     @repository(InscripcionRepository)
-    public inscripcionRepository : InscripcionRepository,
+    public inscripcionRepository: InscripcionRepository,
+    @repository(CertificadoRepository)
+    public certificadoRepository: CertificadoRepository,
+    @repository(FeedbackRepository)
+    public feedbackRepository: FeedbackRepository,
     @repository(EventoRepository)
-    public eventoRepository : EventoRepository,
+    public eventoRepository: EventoRepository,
+    @repository(NotificacionRepository)
+    public notificacionRepository: NotificacionRepository,
+    @repository(NotificacionxInscripcionRepository)
+    public notificacionxInscripcionRepository: NotificacionxInscripcionRepository,
+    @service(LogicaNegocioService)
+    public servicioLogicaNegocio: LogicaNegocioService,
   ) {}
 
   @post('/inscripcion')
@@ -48,16 +67,18 @@ export class InscripcionController {
     inscripcion: Omit<Inscripcion, 'id'>,
   ): Promise<Inscripcion> {
     // Validar que el evento asociado existe
-    const eventoExists = await this.eventoRepository.exists(inscripcion.eventoId);
+    const eventoExists = await this.eventoRepository.exists(
+      inscripcion.eventoId,
+    );
     if (!eventoExists) {
       throw new HttpErrors.NotFound(
-        `El evento con ID ${inscripcion.eventoId} no existe.`
+        `El evento con ID ${inscripcion.eventoId} no existe.`,
       );
     }
     // Verificar si el cupo ya está completo
     const evento = await this.eventoRepository.findById(inscripcion.eventoId);
     const totalInscripciones = await this.inscripcionRepository.count({
-    eventoId: inscripcion.eventoId,
+      eventoId: inscripcion.eventoId,
     });
 
     // Verificar solapamientos (si aplica)
@@ -67,7 +88,7 @@ export class InscripcionController {
 
     if (totalInscripciones.count >= evento.cupoInscripcion) {
       throw new HttpErrors.BadRequest(
-      `No hay plazas disponibles para el evento "${evento.titulo}".`
+        `No hay plazas disponibles para el evento "${evento.titulo}".`,
       );
     }
 
@@ -93,18 +114,22 @@ export class InscripcionController {
 
       if (conflictingInscripciones.length > 0) {
         throw new HttpErrors.BadRequest(
-          `El participante ya está inscrito en un evento que se solapa con estas fechas.`
+          `El participante ya está inscrito en un evento que se solapa con estas fechas.`,
         );
       }
     }
+
+    inscripcion.fecha = new Date().toISOString();
+    inscripcion.asistencia = await this.servicioLogicaNegocio.obtenerQR(
+      inscripcion.participanteId,
+      inscripcion.eventoId,
+    );
 
     // Crear la inscripción si no hay conflictos
     return this.inscripcionRepository.create(inscripcion);
   }
 
-
-
-  @get('/incripcion/count')
+  @get('/inscripcion/count')
   @response(200, {
     description: 'Inscripcion model count',
     content: {'application/json': {schema: CountSchema}},
@@ -115,7 +140,7 @@ export class InscripcionController {
     return this.inscripcionRepository.count(where);
   }
 
-  @get('/incripcion')
+  @get('/inscripcion')
   @response(200, {
     description: 'Array of Inscripcion model instances',
     content: {
@@ -133,7 +158,7 @@ export class InscripcionController {
     return this.inscripcionRepository.find(filter);
   }
 
-  @patch('/incripcion')
+  @patch('/inscripcion')
   @response(200, {
     description: 'Inscripcion PATCH success count',
     content: {'application/json': {schema: CountSchema}},
@@ -152,7 +177,7 @@ export class InscripcionController {
     return this.inscripcionRepository.updateAll(inscripcion, where);
   }
 
-  @get('/incripcion/{id}')
+  @get('/inscripcion/{id}')
   @response(200, {
     description: 'Inscripcion model instance',
     content: {
@@ -163,12 +188,13 @@ export class InscripcionController {
   })
   async findById(
     @param.path.number('id') id: number,
-    @param.filter(Inscripcion, {exclude: 'where'}) filter?: FilterExcludingWhere<Inscripcion>
+    @param.filter(Inscripcion, {exclude: 'where'})
+    filter?: FilterExcludingWhere<Inscripcion>,
   ): Promise<Inscripcion> {
     return this.inscripcionRepository.findById(id, filter);
   }
 
-  @patch('/incripcion/{id}')
+  @patch('/inscripcion/{id}')
   @response(204, {
     description: 'Inscripcion PATCH success',
   })
@@ -186,7 +212,7 @@ export class InscripcionController {
     await this.inscripcionRepository.updateById(id, inscripcion);
   }
 
-  @put('/incripcion/{id}')
+  @put('/inscripcion/{id}')
   @response(204, {
     description: 'Inscripcion PUT success',
   })
@@ -197,11 +223,34 @@ export class InscripcionController {
     await this.inscripcionRepository.replaceById(id, inscripcion);
   }
 
-  @del('/incripcion/{id}')
+  @del('/inscripcion/{id}')
   @response(204, {
     description: 'Inscripcion DELETE success',
   })
   async deleteById(@param.path.number('id') id: number): Promise<void> {
+    // Eliminar la inscripción y el feedback asociado (si existe)
+    const inscripcion = await this.inscripcionRepository.findById(id);
+
+    if (!inscripcion) {
+      throw new HttpErrors.NotFound(`La inscripción con ID ${id} no existe.`);
+    }
+
+    if (inscripcion.feedbackId)
+      await this.feedbackRepository.deleteById(inscripcion.feedbackId);
+
+    if (inscripcion.certificadoId)
+      await this.inscripcionRepository.deleteById(inscripcion.certificadoId);
+
+    if (inscripcion.notificaciones.length > 0) {
+      for (const notificacion of inscripcion.notificaciones) {
+        await this.notificacionxInscripcionRepository.deleteAll({
+          notificacionId: notificacion.id,
+          inscripcionId: inscripcion.id,
+        });
+        await this.notificacionRepository.deleteById(notificacion.id!);
+      }
+    }
+
     await this.inscripcionRepository.deleteById(id);
   }
 }

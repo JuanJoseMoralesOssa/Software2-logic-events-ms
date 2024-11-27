@@ -10,6 +10,7 @@ import {
   del,
   get,
   getModelSchemaRef,
+  HttpErrors,
   param,
   patch,
   post,
@@ -23,9 +24,9 @@ import {FeedbackRepository, InscripcionRepository} from '../repositories';
 export class FeedbackController {
   constructor(
     @repository(FeedbackRepository)
-    public feedbackRepository : FeedbackRepository,
+    public feedbackRepository: FeedbackRepository,
     @repository(InscripcionRepository)
-    public inscripcionRepository : InscripcionRepository,
+    public inscripcionRepository: InscripcionRepository,
   ) {}
 
   @post('/feedback')
@@ -46,11 +47,12 @@ export class FeedbackController {
     })
     feedback: Omit<Feedback, 'id'>,
   ): Promise<Feedback> {
-
     // Crear el certificado
     const createdFeedback = await this.feedbackRepository.create(feedback);
     // Actualizar el feedbackId en la inscripción
-    await this.inscripcionRepository.updateById(feedback.inscripcionId, {certificadoId: createdFeedback.id,});
+    await this.inscripcionRepository.updateById(feedback.inscripcionId, {
+      certificadoId: createdFeedback.id,
+    });
 
     return createdFeedback;
   }
@@ -60,9 +62,7 @@ export class FeedbackController {
     description: 'Feedback model count',
     content: {'application/json': {schema: CountSchema}},
   })
-  async count(
-    @param.where(Feedback) where?: Where<Feedback>,
-  ): Promise<Count> {
+  async count(@param.where(Feedback) where?: Where<Feedback>): Promise<Count> {
     return this.feedbackRepository.count(where);
   }
 
@@ -114,7 +114,8 @@ export class FeedbackController {
   })
   async findById(
     @param.path.number('id') id: number,
-    @param.filter(Feedback, {exclude: 'where'}) filter?: FilterExcludingWhere<Feedback>
+    @param.filter(Feedback, {exclude: 'where'})
+    filter?: FilterExcludingWhere<Feedback>,
   ): Promise<Feedback> {
     return this.feedbackRepository.findById(id, filter);
   }
@@ -153,6 +154,16 @@ export class FeedbackController {
     description: 'Feedback DELETE success',
   })
   async deleteById(@param.path.number('id') id: number): Promise<void> {
+    // Borra el feedback
+    const feedback = await this.feedbackRepository.findById(id);
+    if (!feedback) {
+      throw new HttpErrors.NotFound(`El feedback con ID ${id} no existe.`);
+    }
+    if (feedback.inscripcionId)
+      // await this.inscripcionRepository.deleteById(feedback.inscripcionId);
+      await this.inscripcionRepository.updateById(feedback.inscripcionId, {
+        feedbackId: undefined,
+      });
     await this.feedbackRepository.deleteById(id);
   }
 }

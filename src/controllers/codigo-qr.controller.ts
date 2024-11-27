@@ -1,17 +1,10 @@
-import {
-  repository
-} from '@loopback/repository';
-import {
-  get,
-  HttpErrors,
-  param,
-  response
-} from '@loopback/rest';
+import {repository} from '@loopback/repository';
+import {HttpErrors, param, post, response} from '@loopback/rest';
 import QRCode from 'qrcode';
 import {
   EventoRepository,
   InscripcionRepository,
-  ParticipanteRepository
+  ParticipanteRepository,
 } from '../repositories';
 
 export class CodigoQrController {
@@ -22,11 +15,12 @@ export class CodigoQrController {
     public inscripcionRepository: InscripcionRepository,
     @repository(EventoRepository)
     public eventoRepository: EventoRepository,
-  ) { }
+  ) {}
 
-  @get('/codigo-qr/{participanteId}/{eventoId}')
+  @post('/codigo-qr/{participanteId}/{eventoId}')
   @response(200, {
-    description: 'Generar código QR con información compacta del participante y evento',
+    description:
+      'Generar código QR con información compacta del participante y evento',
     content: {
       'application/json': {
         schema: {
@@ -43,9 +37,12 @@ export class CodigoQrController {
     @param.path.number('eventoId') eventoId: number,
   ): Promise<{qrCode: string}> {
     // Validar existencia del participante
-    const participante = await this.participanteRepository.findById(participanteId);
+    const participante =
+      await this.participanteRepository.findById(participanteId);
     if (!participante) {
-      throw new HttpErrors.NotFound(`Participante con ID ${participanteId} no encontrado.`);
+      throw new HttpErrors.NotFound(
+        `Participante con ID ${participanteId} no encontrado.`,
+      );
     }
 
     // Validar existencia del evento
@@ -55,7 +52,7 @@ export class CodigoQrController {
     }
 
     // Compactar los datos para el QR
-    const data = {
+    const qrData = {
       participante: {
         primerNombre: participante.primerNombre,
         primerApellido: participante.primerApellido,
@@ -73,7 +70,14 @@ export class CodigoQrController {
     };
 
     // Generar código QR
-    const qrCode = await QRCode.toDataURL(JSON.stringify(data));
+    const qrCode = await QRCode.toDataURL(JSON.stringify(qrData));
+    const str_qrCode = qrCode.toString();
+
+    // const qrCode = await QRCode.toDataURL(JSON.stringify(qrData));
+
+    console.log('====================================');
+    console.log('QR Code:', str_qrCode);
+    console.log('====================================');
 
     // Verificar si existe inscripción
     const inscripcion = await this.inscripcionRepository.findOne({
