@@ -1,3 +1,4 @@
+import {service} from '@loopback/core';
 import {
   Count,
   CountSchema,
@@ -18,12 +19,14 @@ import {
   requestBody,
   response,
 } from '@loopback/rest';
+import {NotificacionesConfig} from '../config/notificaciones.config';
 import {Certificado} from '../models';
 import {
   CertificadoRepository,
   EventoRepository,
   InscripcionRepository,
 } from '../repositories';
+import {NotificacionesService} from '../services';
 
 export class CertificadoController {
   constructor(
@@ -33,6 +36,8 @@ export class CertificadoController {
     public inscripcionRepository: InscripcionRepository,
     @repository(EventoRepository)
     public eventoRepository: EventoRepository,
+    @service(NotificacionesService)
+    public servicioNotificaciones: NotificacionesService,
   ) {}
 
   @post('/certificado')
@@ -66,19 +71,37 @@ export class CertificadoController {
     const createdCertificado =
       await this.certificadoRepository.create(certificado);
 
-    // Actualizar el certificadoId en la inscripción
-    await this.inscripcionRepository.updateById(certificado.inscripcionId, {
-      certificadoId: createdCertificado.id,
-    });
-    // Aumentar el numero de asistentes en el evento
-    const inscripcion = await this.inscripcionRepository.findById(
-      certificado.inscripcionId,
-    );
-    const evento = await this.eventoRepository.findById(inscripcion.eventoId);
-    await this.eventoRepository.updateById(inscripcion.eventoId, {
-      numeroAsistentes: (evento.numeroAsistentes ?? 0) + 1,
-    });
-    return createdCertificado;
+  // Actualizar el certificadoId en la inscripción
+  await this.inscripcionRepository.updateById(certificado.inscripcionId, {
+    certificadoId: createdCertificado.id,
+  });
+  // Aumentar el numero de asistentes en el evento
+  const inscripcion = await this.inscripcionRepository.findById(certificado.inscripcionId);
+  const evento = await this.eventoRepository.findById(inscripcion.eventoId);
+  await this.eventoRepository.updateById(inscripcion.eventoId, {
+    numeroAsistentes: (evento.numeroAsistentes ?? 0) + 1,
+  });
+  const participante = await this.inscripcionRepository.participante(inscripcion.id);
+  const organizador = await this.eventoRepository.organizador(evento.id);
+  // Retornar el certificado creado
+  try{
+    let datos = {
+      correoDestino: participante.correo,
+      nombreDestino: participante.primerNombre + ' ' + participante.primerApellido,
+      asuntoCorreo: 'Certificado de asistencia',
+      contenidoCorreo: `${evento.descripcion}`+" de la facultad de "+ `${evento.facultad}` + " que dio comienzo el " + `${evento.fechaInicio}` + " hasta el " + `${evento.fechaFinal}` + " en " + `${evento.lugar}` + " organizado por " + `${organizador.primerNombre}` + " " + `${organizador.primerApellido}`,
+    }
+    let url = NotificacionesConfig.urlNotificationCertificado;
+    console.log(datos);
+    try{
+      this.servicioNotificaciones.EnviarNotificacion(datos,url);
+    }catch(error){
+      console.error('Error al enviar notificación: ' + error.message);
+    }
+  }catch(error){
+    console.error('Error al enviar notificación: ' + error.message);
+  }
+  return createdCertificado;
   }
 
   @get('/certificado/count')
@@ -180,7 +203,7 @@ export class CertificadoController {
     description: 'Certificado DELETE success',
   })
   async deleteById(@param.path.number('id') id: number): Promise<void> {
-    
+
     const certificado = await this.certificadoRepository.findById(id);
     if (!certificado) {
       throw new HttpErrors.NotFound(`Certificado con ID ${id} no existe.`);
