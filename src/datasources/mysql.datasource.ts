@@ -8,7 +8,7 @@ const config = {
   host: 'localhost',
   port: 3306,
   user: 'root',
-  password: 'Felipe0903',
+  password: '1234',
   database: 'soft2proyecto',
 };
 

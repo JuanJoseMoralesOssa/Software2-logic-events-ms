@@ -1,3 +1,4 @@
+import {service} from '@loopback/core';
 import {
   Count,
   CountSchema,
@@ -18,8 +19,10 @@ import {
   requestBody,
   response,
 } from '@loopback/rest';
+import {NotificacionesConfig} from '../config/notificaciones.config';
 import {Evento} from '../models';
-import {EventoRepository, InscripcionRepository} from '../repositories';
+import {EventoRepository, InscripcionRepository, NotificacionRepository, NotificacionxInscripcionRepository, OrganizadorRepository} from '../repositories';
+import {NotificacionesService} from '../services/notificaciones.service';
 
 export class EventoController {
   constructor(
@@ -27,6 +30,14 @@ export class EventoController {
     public eventoRepository: EventoRepository,
     @repository(InscripcionRepository)
     public inscripcionRepository: InscripcionRepository,
+    @repository(NotificacionRepository)
+    public notificacionRepository: NotificacionRepository,
+    @repository(OrganizadorRepository)
+    public organizadorRepository: OrganizadorRepository,
+    @repository(NotificacionxInscripcionRepository)
+    public notificacionesxInscripcionRepository: NotificacionxInscripcionRepository,
+    @service(NotificacionesService)
+    public servicioNotificaciones: NotificacionesService,
   ) {}
 
   @post('/evento')
@@ -170,6 +181,109 @@ export class EventoController {
   ): Promise<void> {
     await this.eventoRepository.updateById(id, evento);
   }
+
+  @patch('/CambioEvento/{id}')
+  @response(204, {
+    description: 'Evento PATCH success',
+  })
+  async updateId(
+    @param.path.number('id') id: number,
+    @requestBody({
+      content: {
+        'application/json': {
+          schema: getModelSchemaRef(Evento, {partial: true}),
+        },
+      },
+    })
+    evento: Evento,
+  ): Promise<void> {
+    // Obtener el evento original de la base de datos
+    const eventoOriginal = await this.eventoRepository.findById(id);
+
+    // Verificar cambios en fechas
+    const fechaInicioCambiada = evento.fechaInicio && evento.fechaInicio !== eventoOriginal.fechaInicio;
+    const fechaFinalCambiada = evento.fechaFinal && evento.fechaFinal !== eventoOriginal.fechaFinal;
+
+    if (fechaInicioCambiada || fechaFinalCambiada) {
+      // Notificación por cambio de fechas
+      const inscripciones = await this.eventoRepository.inscripcions(eventoOriginal.id).find();
+      console.log(inscripciones);
+      const organizador = await this.organizadorRepository.findById(eventoOriginal.organizadorId);
+      for (const inscripcion of inscripciones) {
+        const participante = await this.inscripcionRepository.participante(inscripcion.id);
+
+        const datos = {
+          correoDestino: participante.correo,
+          nombreDestino: `${participante.primerNombre} ${participante.primerApellido}`,
+          asuntoCorreo: 'Cambio de agenda',
+          contenidoCorreo: `El evento "${eventoOriginal.descripcion}" se dispondra en las fechas: \n
+            ${evento.fechaInicio} hasta ${evento.fechaFinal} en ${eventoOriginal.lugar}.`,
+        };
+
+        const url = NotificacionesConfig.urlNotificationUpdateevento;
+
+        try {
+          await this.servicioNotificaciones.EnviarNotificacion(datos, url);
+        } catch (error) {
+          console.error(`Error al enviar notificación: ${error.message}`);
+        }
+
+        let notificacion =await this.notificacionRepository.create({
+          asunto: 'Cambio de agenda',
+          fecha: String(new Date()),
+          mensaje: datos.contenidoCorreo,
+          remitente: `${organizador.primerNombre} ${organizador.primerApellido}`,
+          destinatario: datos.nombreDestino,
+        });
+
+        await this.notificacionesxInscripcionRepository.create({
+          notificacionId: notificacion.id,
+          inscripcionId: inscripcion.id,
+        });
+
+      }
+    } else {
+      // Notificación para otros cambios (anuncio)
+      const inscripciones = await this.eventoRepository.inscripcions(eventoOriginal.id).find();
+      const organizador = await this.eventoRepository.organizador(evento.id);
+
+      for (const inscripcion of inscripciones) {
+        const participante = await this.inscripcionRepository.participante(inscripcion.id);
+
+        const datos = {
+          correoDestino: participante.correo,
+          nombreDestino: `${participante.primerNombre} ${participante.primerApellido}`,
+          asuntoCorreo: 'Actualización de evento',
+          contenidoCorreo: `El evento "${evento.descripcion}" ha sido actualizado. Por favor, revisa los cambios recientes en la plataforma.`,
+        };
+
+        const url = NotificacionesConfig.urlNotificationUpdateevento;
+
+        try {
+          await this.servicioNotificaciones.EnviarNotificacion(datos, url);
+        } catch (error) {
+          console.error(`Error al enviar notificación: ${error.message}`);
+        }
+
+        let notificacion =await this.notificacionRepository.create({
+          fecha: String(new Date()),
+          asunto: 'Anuncio',
+          mensaje: datos.contenidoCorreo,
+          remitente: `${organizador.primerNombre} ${organizador.primerApellido}`,
+          destinatario: datos.nombreDestino,
+        });
+
+        await this.notificacionesxInscripcionRepository.create({
+          notificacionId: notificacion.id,
+          inscripcionId: inscripcion.id,
+        });
+      }
+    }
+
+    // Actualizar el evento en la base de datos
+    await this.eventoRepository.updateById(id, evento);
+  }
+
 
   @put('/evento/{id}')
   @response(204, {
