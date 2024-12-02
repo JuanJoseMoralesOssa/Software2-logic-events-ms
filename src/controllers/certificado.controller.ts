@@ -89,7 +89,7 @@ export class CertificadoController {
       correoDestino: participante.correo,
       nombreDestino: participante.primerNombre + ' ' + participante.primerApellido,
       asuntoCorreo: 'Certificado de asistencia',
-      contenidoCorreo: `${evento.descripcion}`+" de la facultad de "+ `${evento.facultad}` + " que dio comienzo el: \n"  + `${evento.fechaInicio}` + " hasta el " + `${evento.fechaFinal}` + " en " + `${evento.lugar}` + "\n organizado por " + `${organizador.primerNombre}` + " " + `${organizador.primerApellido}`,
+      contenidoCorreo: `${evento.titulo}`+" de la facultad de "+ `${evento.facultad}` + " que dio comienzo el: \n"  + `${evento.fechaInicio}` + " hasta el " + `${evento.fechaFinal}` + " en " + `${evento.lugar}` + "\n organizado por " + `${organizador.primerNombre}` + " " + `${organizador.primerApellido}`,
     }
     let url = NotificacionesConfig.urlNotificationCertificado;
     console.log(datos);

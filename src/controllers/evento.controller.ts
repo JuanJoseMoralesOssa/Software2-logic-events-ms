@@ -216,7 +216,7 @@ export class EventoController {
           correoDestino: participante.correo,
           nombreDestino: `${participante.primerNombre} ${participante.primerApellido}`,
           asuntoCorreo: 'Cambio de agenda',
-          contenidoCorreo: `El evento "${eventoOriginal.descripcion}" se dispondra en las fechas: \n
+          contenidoCorreo: `El evento "${eventoOriginal.titulo}" se dispondra en las fechas: \n
             ${evento.fechaInicio} hasta ${evento.fechaFinal} en ${eventoOriginal.lugar}.`,
         };
 
@@ -254,7 +254,7 @@ export class EventoController {
           correoDestino: participante.correo,
           nombreDestino: `${participante.primerNombre} ${participante.primerApellido}`,
           asuntoCorreo: 'Actualización de evento',
-          contenidoCorreo: `El evento "${evento.descripcion}" ha sido actualizado. Por favor, revisa los cambios recientes en la plataforma.`,
+          contenidoCorreo: `El evento "${evento.titulo}" ha sido actualizado. Por favor, revisa los cambios recientes en la plataforma.`,
         };
 
         const url = NotificacionesConfig.urlNotificationUpdateevento;

@@ -93,32 +93,30 @@ export class InscripcionController {
     }
 
     if (existingInscripciones.length > 0) {
-      const conflictingInscripciones = await this.inscripcionRepository.find({
+      const existingInscripciones = await this.inscripcionRepository.find({
         where: {
           participanteId: inscripcion.participanteId,
         },
-        include: [
-          {
-            relation: 'evento',
-            scope: {
-              where: {
-                and: [
-                  {fechaInicio: {lte: evento.fechaFinal}},
-                  {fechaFinal: {gte: evento.fechaInicio}},
-                ],
-              },
-            },
-          },
-        ],
+        fields: { eventoId: true },
       });
 
-      if (conflictingInscripciones.length > 0) {
-        throw new HttpErrors.BadRequest(
-          `El participante ya está inscrito en un evento que se solapa con estas fechas.`,
-        );
-      }
-    }
+      const existingEventoIds = existingInscripciones.map(inscripcion => inscripcion.eventoId);
+      const conflictingEventos = await this.eventoRepository.find({
+        where: {
+          id: { inq: existingEventoIds }, // Buscar solo los eventos cuyos IDs están en existingEventoIds
+          // Verificar solapamientos con el evento actual
+          fechaInicio: { lte: evento.fechaFinal },
+          fechaFinal: { gte: evento.fechaInicio },
+        },
+      });
 
+    console.log(conflictingEventos);
+    if (conflictingEventos.length > 0) {
+      throw new HttpErrors.BadRequest(
+        `El participante ya está inscrito en un evento que se solapa con estas fechas.`,
+      );
+    }
+  }
     inscripcion.fecha = new Date().toISOString();
     inscripcion.asistencia = await this.servicioLogicaNegocio.obtenerQR(
       inscripcion.participanteId,

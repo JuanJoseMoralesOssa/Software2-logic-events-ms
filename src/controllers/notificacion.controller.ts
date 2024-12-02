@@ -1,3 +1,4 @@
+import {service} from '@loopback/core';
 import {
   Count,
   CountSchema,
@@ -9,21 +10,23 @@ import {
 import {
   del,
   get,
-  getModelSchemaRef,
-  param,
+  getModelSchemaRef, HttpErrors, param,
   patch,
   post,
   put,
   requestBody,
-  response,
+  response
 } from '@loopback/rest';
+import {NotificacionesConfig} from '../config/notificaciones.config';
 import {Notificacion} from '../models';
 import {
+  EventoRepository,
   InscripcionRepository,
   NotificacionRepository,
   NotificacionxInscripcionRepository,
+  ParticipanteRepository
 } from '../repositories';
-
+import {NotificacionesService} from '../services/notificaciones.service';
 export class NotificacionController {
   constructor(
     @repository(NotificacionRepository)
@@ -32,6 +35,12 @@ export class NotificacionController {
     public inscripcionRepository: InscripcionRepository,
     @repository(NotificacionxInscripcionRepository)
     public notificacionxInscripcionRepository: NotificacionxInscripcionRepository,
+    @repository(EventoRepository)
+    public eventoRepository: EventoRepository,
+    @repository(ParticipanteRepository)
+    public partipanteRepository: ParticipanteRepository,
+    @service(NotificacionesService)
+    public servicioNotificaciones: NotificacionesService,
   ) {}
 
   @post('/notificacion')
@@ -54,6 +63,64 @@ export class NotificacionController {
   ): Promise<Notificacion> {
     return this.notificacionRepository.create(notificacion);
   }
+
+  @post('/Recordatorio')
+  @response(200, {
+    description: 'Notificacion model instance',
+    content: {'application/json': {schema: getModelSchemaRef(Notificacion)}},
+  })
+  async createRecordatorio(
+    @requestBody() eventoId: number // Recibe solo el valor numérico de eventoId
+  ) {
+    // Verificar si el evento existe
+    console.log('EventoId', eventoId);
+    const evento = await this.eventoRepository.findById(eventoId);
+    console.log('Evento', evento);
+    if (!evento) {
+      throw new HttpErrors.NotFound(`Evento con ID ${eventoId} no encontrado.`);
+    }
+    const inscripciones = await this.eventoRepository.inscripcions(evento.id).find();
+    const organizador = await this.eventoRepository.organizador(evento.id);
+    for (const inscripcion of inscripciones) {
+      const participante = await this.partipanteRepository.findById(inscripcion.participanteId);
+      const notificacion = new Notificacion({
+        fecha: String(new Date()), // Fecha actual
+        asunto: 'Recordatorio', // Valores por defecto o específicos
+        mensaje: 'Le recordamos los detalles del evento: ' + evento.titulo +
+        '\n El que se llevara acabo el ' + evento.fechaInicio + ' en ' + evento.lugar
+        + '\n El evento es organizado por: ' + organizador.primerNombre + ' ' + organizador.primerApellido
+        + '\n y lleva como descripcion ' + evento.descripcion
+        + '\n Esperamos contar con su presencia'
+        + '\n Atentamente Facultad de ' + evento.facultad,
+        remitente: organizador.primerNombre + ' ' + organizador.primerApellido,
+        destinatario : participante.primerNombre + ' ' + participante.primerApellido,
+      });
+      // Guardar la notificación en la base de datos
+      const notificacionGuardada = await this.notificacionRepository.create(notificacion);
+      // Crear la relación entre la notificación y la inscripción
+      const datos = {
+        correoDestino: participante.correo,
+        nombreDestino: `${participante.primerNombre} ${participante.primerApellido}`,
+        asuntoCorreo: notificacionGuardada.asunto,
+        contenidoCorreo: notificacionGuardada.mensaje,
+      };
+
+      const url = NotificacionesConfig.urlNotificationUpdateevento;
+
+      try {
+        await this.servicioNotificaciones.EnviarNotificacion(datos, url);
+      } catch (error) {
+        console.error(`Error al enviar notificación: ${error.message}`);
+      }
+
+      await this.notificacionxInscripcionRepository.create({
+        notificacionId: notificacionGuardada.id,
+        inscripcionId: inscripcion.id,
+      });
+    }
+  }
+
+
 
   @get('/notificacion/count')
   @response(200, {
