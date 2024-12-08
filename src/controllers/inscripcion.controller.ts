@@ -19,6 +19,7 @@ import {
   requestBody,
   response,
 } from '@loopback/rest';
+import {NotificacionesConfig} from '../config/notificaciones.config';
 import {Inscripcion} from '../models';
 import {
   CertificadoRepository,
@@ -28,7 +29,7 @@ import {
   NotificacionRepository,
   NotificacionxInscripcionRepository,
 } from '../repositories';
-import {LogicaNegocioService} from '../services';
+import {LogicaNegocioService, NotificacionesService} from '../services';
 
 export class InscripcionController {
   constructor(
@@ -46,6 +47,8 @@ export class InscripcionController {
     public notificacionxInscripcionRepository: NotificacionxInscripcionRepository,
     @service(LogicaNegocioService)
     public servicioLogicaNegocio: LogicaNegocioService,
+    @service(NotificacionesService)
+    public servicioNotificaciones: NotificacionesService,
   ) {}
 
   @post('/inscripcion')
@@ -103,8 +106,7 @@ export class InscripcionController {
       const existingEventoIds = existingInscripciones.map(inscripcion => inscripcion.eventoId);
       const conflictingEventos = await this.eventoRepository.find({
         where: {
-          id: { inq: existingEventoIds }, // Buscar solo los eventos cuyos IDs están en existingEventoIds
-          // Verificar solapamientos con el evento actual
+          id: { inq: existingEventoIds },
           fechaInicio: { lte: evento.fechaFinal },
           fechaFinal: { gte: evento.fechaInicio },
         },
@@ -122,6 +124,27 @@ export class InscripcionController {
       inscripcion.participanteId,
       inscripcion.eventoId,
     );
+
+  const participante = await this.inscripcionRepository.participante(inscripcion.participanteId);
+
+    // Enviar Qr al correo del participante
+  try{
+    let datos = {
+      correoDestino: participante.correo,
+      nombreDestino: participante.primerNombre + ' ' + participante.primerApellido,
+      asuntoCorreo: 'Codigo QR de asistencia',
+      contenidoCorreo: 'alt=CodigoQR src='+`${inscripcion.asistencia}`+' style="display: block; margin: 10px 0; width: 200px; height: 200px;',
+    }
+    let url = NotificacionesConfig.urlNotificationQR;
+    console.log(datos);
+    try{
+      this.servicioNotificaciones.EnviarNotificacion(datos,url);
+    }catch(error){
+      console.error('Error al enviar notificación: ' + error.message);
+    }
+  }catch(error){
+    console.error('Error al enviar notificación: ' + error.message);
+  }
 
     // Crear la inscripción si no hay conflictos
     return this.inscripcionRepository.create(inscripcion);
