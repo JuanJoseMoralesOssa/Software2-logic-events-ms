@@ -101,6 +101,7 @@ export class CertificadoController {
   }catch(error){
     console.error('Error al enviar notificación: ' + error.message);
   }
+  console.log(createdCertificado);
   return createdCertificado;
   }
 

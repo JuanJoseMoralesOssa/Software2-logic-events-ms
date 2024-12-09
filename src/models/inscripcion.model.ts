@@ -59,9 +59,10 @@ export class Inscripcion extends Entity {
   // ALTER TABLE soft2proyecto.inscripcion
   // MODIFY COLUMN asistencia TEXT;
   @property({
-    type: 'string',
+    type: 'boolean',
+    default: false,
   })
-  asistencia?: string;
+  asistencia?: boolean;
 
   @belongsTo(() => Evento)
   eventoId: number;

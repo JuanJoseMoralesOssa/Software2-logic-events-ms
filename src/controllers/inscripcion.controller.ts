@@ -126,7 +126,7 @@ export class InscripcionController {
     }
 
     inscripcion.fecha = new Date().toISOString();
-    inscripcion.asistencia = await this.servicioLogicaNegocio.obtenerQR(
+    const qrcode = await this.servicioLogicaNegocio.obtenerQR(
       inscripcion.participanteId,
       inscripcion.eventoId,
     );
@@ -148,27 +148,23 @@ export class InscripcionController {
     }
 
     // Enviar Qr al correo del participante
-    try {
-      let datos = {
-        correoDestino: participante.correo,
-        nombreDestino:
-          participante.primerNombre + ' ' + participante.primerApellido,
-        asuntoCorreo: 'Codigo QR de asistencia',
-        contenidoCorreo:
-          'alt=CodigoQR src=' +
-          `${inscripcion.asistencia}` +
-          ' style="display: block; margin: 10px 0; width: 200px; height: 200px;',
-      };
-      let url = NotificacionesConfig.urlNotificationQR;
-      console.log(datos);
-      try {
-        this.servicioNotificaciones.EnviarNotificacion(datos, url);
-      } catch (error) {
-        console.error('Error al enviar notificación: ' + error.message);
-      }
-    } catch (error) {
+  try{
+    let datos = {
+      correoDestino: participante.correo,
+      nombreDestino: participante.primerNombre + ' ' + participante.primerApellido,
+      asuntoCorreo: 'Codigo QR de asistencia',
+      contenidoCorreo: qrcode,
+    }
+    let url = NotificacionesConfig.urlNotificationQR;
+    console.log(datos);
+    try{
+      this.servicioNotificaciones.EnviarNotificacion(datos,url);
+    }catch(error){
       console.error('Error al enviar notificación: ' + error.message);
     }
+  }catch(error){
+    console.error('Error al enviar notificación: ' + error.message);
+  }
 
     // Crear la inscripción si no hay conflictos
     return this.inscripcionRepository.create(inscripcion);
