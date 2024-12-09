@@ -1,20 +1,18 @@
 import {Entity, hasOne, model, property} from '@loopback/repository';
 import {Inscripcion} from './inscripcion.model';
 
-@model(
-  {
-    settings: {
-      foreignKeys: {
-        fk_inscripcion_id: {
-          name: 'fk_inscripcion_id_feekback',
-          entity: 'Inscripcion',
-          entityKey: 'id',
-          foreignKey: 'inscripcionId',
-        },
+@model({
+  settings: {
+    foreignKeys: {
+      fk_inscripcion_id: {
+        name: 'fk_inscripcion_id_feekback',
+        entity: 'Inscripcion',
+        entityKey: 'id',
+        foreignKey: 'inscripcionId',
       },
     },
   },
-)
+})
 export class Feedback extends Entity {
   @property({
     type: 'number',
@@ -27,7 +25,7 @@ export class Feedback extends Entity {
     type: 'string',
     required: true,
   })
-  descripcion: string;
+  comments: string;
 
   @property({
     type: 'number',
@@ -37,7 +35,17 @@ export class Feedback extends Entity {
   @property({
     type: 'number',
   })
-  calificacion?: number;
+  overallEventRating?: number;
+
+  @property({
+    type: 'number',
+  })
+  contentQuality?: number;
+
+  @property({
+    type: 'number',
+  })
+  organizationQuality?: number;
 
   @hasOne(() => Inscripcion)
   inscripcion: Inscripcion;

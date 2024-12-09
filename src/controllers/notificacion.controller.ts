@@ -5,17 +5,19 @@ import {
   Filter,
   FilterExcludingWhere,
   repository,
-  Where
+  Where,
 } from '@loopback/repository';
 import {
   del,
   get,
-  getModelSchemaRef, HttpErrors, param,
+  getModelSchemaRef,
+  HttpErrors,
+  param,
   patch,
   post,
   put,
   requestBody,
-  response
+  response,
 } from '@loopback/rest';
 import {NotificacionesConfig} from '../config/notificaciones.config';
 import {Notificacion} from '../models';
@@ -24,7 +26,7 @@ import {
   InscripcionRepository,
   NotificacionRepository,
   NotificacionxInscripcionRepository,
-  ParticipanteRepository
+  ParticipanteRepository,
 } from '../repositories';
 import {NotificacionesService} from '../services/notificaciones.service';
 export class NotificacionController {
@@ -70,7 +72,7 @@ export class NotificacionController {
     content: {'application/json': {schema: getModelSchemaRef(Notificacion)}},
   })
   async createRecordatorio(
-    @requestBody() eventoId: number // Recibe solo el valor numérico de eventoId
+    @requestBody() eventoId: number, // Recibe solo el valor numérico de eventoId
   ) {
     // Verificar si el evento existe
     console.log('EventoId', eventoId);
@@ -79,24 +81,40 @@ export class NotificacionController {
     if (!evento) {
       throw new HttpErrors.NotFound(`Evento con ID ${eventoId} no encontrado.`);
     }
-    const inscripciones = await this.eventoRepository.inscripcions(evento.id).find();
+    const inscripciones = await this.eventoRepository
+      .inscripcions(evento.id)
+      .find();
     const organizador = await this.eventoRepository.organizador(evento.id);
     for (const inscripcion of inscripciones) {
-      const participante = await this.partipanteRepository.findById(inscripcion.participanteId);
+      const participante = await this.partipanteRepository.findById(
+        inscripcion.participanteId,
+      );
       const notificacion = new Notificacion({
         fecha: String(new Date()), // Fecha actual
         asunto: 'Recordatorio', // Valores por defecto o específicos
-        mensaje: 'Le recordamos los detalles del evento: ' + evento.titulo +
-        '\n El que se llevara acabo el ' + evento.fechaInicio + ' en ' + evento.lugar
-        + '\n El evento es organizado por: ' + organizador.primerNombre + ' ' + organizador.primerApellido
-        + '\n y lleva como descripcion ' + evento.descripcion
-        + '\n Esperamos contar con su presencia'
-        + '\n Atentamente Facultad de ' + evento.facultad,
+        mensaje:
+          'Le recordamos los detalles del evento: ' +
+          evento.titulo +
+          '\n El que se llevara acabo el ' +
+          evento.fechaInicio +
+          ' en ' +
+          evento.lugar +
+          '\n El evento es organizado por: ' +
+          organizador.primerNombre +
+          ' ' +
+          organizador.primerApellido +
+          '\n y lleva como descripcion ' +
+          evento.descripcion +
+          '\n Esperamos contar con su presencia' +
+          '\n Atentamente Facultad de ' +
+          evento.facultad,
         remitente: organizador.primerNombre + ' ' + organizador.primerApellido,
-        destinatario : participante.primerNombre + ' ' + participante.primerApellido,
+        destinatario:
+          participante.primerNombre + ' ' + participante.primerApellido,
       });
       // Guardar la notificación en la base de datos
-      const notificacionGuardada = await this.notificacionRepository.create(notificacion);
+      const notificacionGuardada =
+        await this.notificacionRepository.create(notificacion);
       // Crear la relación entre la notificación y la inscripción
       const datos = {
         correoDestino: participante.correo,
@@ -119,8 +137,6 @@ export class NotificacionController {
       });
     }
   }
-
-
 
   @get('/notificacion/count')
   @response(200, {
@@ -221,7 +237,6 @@ export class NotificacionController {
     description: 'Notificacion DELETE success',
   })
   async deleteById(@param.path.number('id') id: number): Promise<void> {
-    const notificacion = await this.notificacionRepository.findById(id);
     const notificacionesxInscripcion =
       await this.notificacionxInscripcionRepository.find({
         where: {
@@ -231,7 +246,7 @@ export class NotificacionController {
 
     for (const notificacionxInscripcion of notificacionesxInscripcion) {
       await this.notificacionxInscripcionRepository.deleteById(
-        notificacionxInscripcion.id!,
+        notificacionxInscripcion.id,
       );
     }
 

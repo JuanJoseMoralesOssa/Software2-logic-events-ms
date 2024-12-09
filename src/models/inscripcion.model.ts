@@ -56,11 +56,10 @@ export class Inscripcion extends Entity {
   })
   fecha?: string;
 
+  // ALTER TABLE nombre_de_tu_tabla
+  // MODIFY COLUMN asistencia TEXT;
   @property({
     type: 'string',
-    mysql: {
-      dataLength: 65535, // Usa una longitud adecuada para tu caso
-    },
   })
   asistencia?: string;
 
