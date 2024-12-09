@@ -120,7 +120,7 @@ export class InscripcionController {
     }
   }
     inscripcion.fecha = new Date().toISOString();
-    inscripcion.asistencia = await this.servicioLogicaNegocio.obtenerQR(
+    const qrcode = await this.servicioLogicaNegocio.obtenerQR(
       inscripcion.participanteId,
       inscripcion.eventoId,
     );
@@ -133,7 +133,7 @@ export class InscripcionController {
       correoDestino: participante.correo,
       nombreDestino: participante.primerNombre + ' ' + participante.primerApellido,
       asuntoCorreo: 'Codigo QR de asistencia',
-      contenidoCorreo: 'alt=CodigoQR src='+`${inscripcion.asistencia}`+' style="display: block; margin: 10px 0; width: 200px; height: 200px;',
+      contenidoCorreo: qrcode,
     }
     let url = NotificacionesConfig.urlNotificationQR;
     console.log(datos);

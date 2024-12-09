@@ -57,12 +57,10 @@ export class Inscripcion extends Entity {
   fecha?: string;
 
   @property({
-    type: 'string',
-    mysql: {
-      dataLength: 65535, // Usa una longitud adecuada para tu caso
-    },
+    type: 'boolean',
+    default: false,
   })
-  asistencia?: string;
+  asistencia?: boolean;
 
   @belongsTo(() => Evento)
   eventoId: number;
