@@ -55,6 +55,13 @@ export class FeedbackController {
         `Inscripción con ID ${feedback.inscripcionId} no encontrada.`,
       );
     }
+
+    if (inscripcion.feedbackId) {
+      throw new HttpErrors.BadRequest(
+        `La inscripción con ID ${feedback.inscripcionId} ya tiene un feedback.`,
+      );
+    }
+
     const feedbackCreado = await this.feedbackRepository.create(feedback);
     await this.inscripcionRepository.updateById(feedback.inscripcionId, {
       feedbackId: feedbackCreado.id,

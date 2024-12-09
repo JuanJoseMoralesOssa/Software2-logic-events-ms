@@ -2,18 +2,18 @@ import {Entity, hasOne, model, property} from '@loopback/repository';
 import {Inscripcion} from './inscripcion.model';
 
 @model(
-  {
-    settings: {
-      foreignKeys: {
-        fk_inscripcion_id: {
-          name: 'fk_inscripcion_id_certificado',
-          entity: 'Inscripcion',
-          entityKey: 'id',
-          foreignKey: 'inscripcionId',
-        },
-      },
-    },
-  },
+  // {
+  //   settings: {
+  //     foreignKeys: {
+  //       fk_inscripcion_id: {
+  //         name: 'fk_inscripcion_id_certificado',
+  //         entity: 'Inscripcion',
+  //         entityKey: 'id',
+  //         foreignKey: 'inscripcionId',
+  //       },
+  //     },
+  //   },
+  // },
 )
 export class Certificado extends Entity {
   @property({
