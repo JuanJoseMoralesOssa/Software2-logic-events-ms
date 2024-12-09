@@ -7,23 +7,25 @@ import {
   Where,
 } from '@loopback/repository';
 import {
-  post,
-  param,
+  del,
   get,
   getModelSchemaRef,
+  param,
   patch,
+  post,
   put,
-  del,
   requestBody,
   response,
 } from '@loopback/rest';
 import {Organizador} from '../models';
-import {OrganizadorRepository} from '../repositories';
+import {EventoRepository, OrganizadorRepository} from '../repositories';
 
 export class OrganizadorController {
   constructor(
     @repository(OrganizadorRepository)
-    public organizadorRepository : OrganizadorRepository,
+    public organizadorRepository: OrganizadorRepository,
+    @repository(EventoRepository)
+    public eventoRepository: EventoRepository,
   ) {}
 
   @post('/organizador')
@@ -106,7 +108,8 @@ export class OrganizadorController {
   })
   async findById(
     @param.path.number('id') id: number,
-    @param.filter(Organizador, {exclude: 'where'}) filter?: FilterExcludingWhere<Organizador>
+    @param.filter(Organizador, {exclude: 'where'})
+    filter?: FilterExcludingWhere<Organizador>,
   ): Promise<Organizador> {
     return this.organizadorRepository.findById(id, filter);
   }
@@ -145,6 +148,12 @@ export class OrganizadorController {
     description: 'Organizador DELETE success',
   })
   async deleteById(@param.path.number('id') id: number): Promise<void> {
+    const eventos = await this.eventoRepository.find({
+      where: {organizadorId: id},
+    });
+    for (const evento of eventos) {
+      await this.eventoRepository.deleteById(evento.id);
+    }
     await this.organizadorRepository.deleteById(id);
   }
 }

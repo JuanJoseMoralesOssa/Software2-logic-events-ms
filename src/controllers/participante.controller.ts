@@ -174,10 +174,10 @@ export class ParticipanteController {
   })
   async deleteById(@param.path.number('id') id: number): Promise<void> {
     const inscripciones = await this.inscripcionRepository.find({
-      where: {eventoId: id},
+      where: {participanteId: id},
     });
     for (const inscripcion of inscripciones) {
-      await this.inscripcionRepository.deleteById(inscripcion.id!);
+      await this.inscripcionRepository.deleteById(inscripcion.id);
     }
     await this.participanteRepository.deleteById(id);
   }

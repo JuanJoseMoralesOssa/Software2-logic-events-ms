@@ -100,32 +100,36 @@ export class InscripcionController {
         where: {
           participanteId: inscripcion.participanteId,
         },
-        fields: { eventoId: true },
+        fields: {eventoId: true},
       });
 
-      const existingEventoIds = existingInscripciones.map(inscripcion => inscripcion.eventoId);
+      const existingEventoIds = existingInscripciones.map(
+        inscripcion => inscripcion.eventoId,
+      );
       const conflictingEventos = await this.eventoRepository.find({
         where: {
-          id: { inq: existingEventoIds },
-          fechaInicio: { lte: evento.fechaFinal },
-          fechaFinal: { gte: evento.fechaInicio },
+          id: {inq: existingEventoIds},
+          fechaInicio: {lte: evento.fechaFinal},
+          fechaFinal: {gte: evento.fechaInicio},
         },
       });
 
-    console.log(conflictingEventos);
-    if (conflictingEventos.length > 0) {
-      throw new HttpErrors.BadRequest(
-        `El participante ya está inscrito en un evento que se solapa con estas fechas.`,
-      );
+      console.log(conflictingEventos);
+      if (conflictingEventos.length > 0) {
+        throw new HttpErrors.BadRequest(
+          `El participante ya está inscrito en un evento que se solapa con estas fechas.`,
+        );
+      }
     }
-  }
     inscripcion.fecha = new Date().toISOString();
     const qrcode = await this.servicioLogicaNegocio.obtenerQR(
       inscripcion.participanteId,
       inscripcion.eventoId,
     );
 
-  const participante = await this.inscripcionRepository.participante(inscripcion.participanteId);
+    const participante = await this.inscripcionRepository.participante(
+      inscripcion.participanteId,
+    );
 
     // Enviar Qr al correo del participante
   try{
@@ -262,13 +266,13 @@ export class InscripcionController {
     if (inscripcion.certificadoId)
       await this.inscripcionRepository.deleteById(inscripcion.certificadoId);
 
-    if (inscripcion.notificaciones.length > 0) {
+    if (inscripcion.notificaciones && inscripcion.notificaciones.length > 0) {
       for (const notificacion of inscripcion.notificaciones) {
         await this.notificacionxInscripcionRepository.deleteAll({
           notificacionId: notificacion.id,
           inscripcionId: inscripcion.id,
         });
-        await this.notificacionRepository.deleteById(notificacion.id!);
+        await this.notificacionRepository.deleteById(notificacion.id);
       }
     }
 

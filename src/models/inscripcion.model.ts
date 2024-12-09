@@ -56,6 +56,8 @@ export class Inscripcion extends Entity {
   })
   fecha?: string;
 
+  // ALTER TABLE nombre_de_tu_tabla
+  // MODIFY COLUMN asistencia TEXT;
   @property({
     type: 'boolean',
     default: false,

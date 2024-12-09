@@ -21,7 +21,13 @@ import {
 } from '@loopback/rest';
 import {NotificacionesConfig} from '../config/notificaciones.config';
 import {Evento} from '../models';
-import {EventoRepository, InscripcionRepository, NotificacionRepository, NotificacionxInscripcionRepository, OrganizadorRepository} from '../repositories';
+import {
+  EventoRepository,
+  InscripcionRepository,
+  NotificacionRepository,
+  NotificacionxInscripcionRepository,
+  OrganizadorRepository,
+} from '../repositories';
 import {NotificacionesService} from '../services/notificaciones.service';
 
 export class EventoController {
@@ -201,16 +207,24 @@ export class EventoController {
     const eventoOriginal = await this.eventoRepository.findById(id);
 
     // Verificar cambios en fechas
-    const fechaInicioCambiada = evento.fechaInicio && evento.fechaInicio !== eventoOriginal.fechaInicio;
-    const fechaFinalCambiada = evento.fechaFinal && evento.fechaFinal !== eventoOriginal.fechaFinal;
+    const fechaInicioCambiada =
+      evento.fechaInicio && evento.fechaInicio !== eventoOriginal.fechaInicio;
+    const fechaFinalCambiada =
+      evento.fechaFinal && evento.fechaFinal !== eventoOriginal.fechaFinal;
 
     if (fechaInicioCambiada || fechaFinalCambiada) {
       // Notificación por cambio de fechas
-      const inscripciones = await this.eventoRepository.inscripcions(eventoOriginal.id).find();
+      const inscripciones = await this.eventoRepository
+        .inscripcions(eventoOriginal.id)
+        .find();
       console.log(inscripciones);
-      const organizador = await this.organizadorRepository.findById(eventoOriginal.organizadorId);
+      const organizador = await this.organizadorRepository.findById(
+        eventoOriginal.organizadorId,
+      );
       for (const inscripcion of inscripciones) {
-        const participante = await this.inscripcionRepository.participante(inscripcion.id);
+        const participante = await this.inscripcionRepository.participante(
+          inscripcion.id,
+        );
 
         const datos = {
           correoDestino: participante.correo,
@@ -228,7 +242,7 @@ export class EventoController {
           console.error(`Error al enviar notificación: ${error.message}`);
         }
 
-        let notificacion =await this.notificacionRepository.create({
+        let notificacion = await this.notificacionRepository.create({
           asunto: 'Cambio de agenda',
           fecha: String(new Date()),
           mensaje: datos.contenidoCorreo,
@@ -240,15 +254,18 @@ export class EventoController {
           notificacionId: notificacion.id,
           inscripcionId: inscripcion.id,
         });
-
       }
     } else {
       // Notificación para otros cambios (anuncio)
-      const inscripciones = await this.eventoRepository.inscripcions(eventoOriginal.id).find();
+      const inscripciones = await this.eventoRepository
+        .inscripcions(eventoOriginal.id)
+        .find();
       const organizador = await this.eventoRepository.organizador(evento.id);
 
       for (const inscripcion of inscripciones) {
-        const participante = await this.inscripcionRepository.participante(inscripcion.id);
+        const participante = await this.inscripcionRepository.participante(
+          inscripcion.id,
+        );
 
         const datos = {
           correoDestino: participante.correo,
@@ -265,7 +282,7 @@ export class EventoController {
           console.error(`Error al enviar notificación: ${error.message}`);
         }
 
-        let notificacion =await this.notificacionRepository.create({
+        let notificacion = await this.notificacionRepository.create({
           fecha: String(new Date()),
           asunto: 'Anuncio',
           mensaje: datos.contenidoCorreo,
@@ -283,7 +300,6 @@ export class EventoController {
     // Actualizar el evento en la base de datos
     await this.eventoRepository.updateById(id, evento);
   }
-
 
   @put('/evento/{id}')
   @response(204, {
@@ -306,7 +322,7 @@ export class EventoController {
       where: {eventoId: id},
     });
     for (const inscripcion of inscripciones) {
-      await this.inscripcionRepository.deleteById(inscripcion.id!);
+      await this.inscripcionRepository.deleteById(inscripcion.id);
     }
     await this.eventoRepository.deleteById(id);
   }
