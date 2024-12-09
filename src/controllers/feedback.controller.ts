@@ -47,14 +47,19 @@ export class FeedbackController {
     })
     feedback: Omit<Feedback, 'id'>,
   ): Promise<Feedback> {
-    // Crear el certificado
-    const createdFeedback = await this.feedbackRepository.create(feedback);
-    // Actualizar el feedbackId en la inscripción
+    const inscripcion = await this.inscripcionRepository.findById(
+      feedback.inscripcionId,
+    );
+    if (!inscripcion) {
+      throw new HttpErrors.NotFound(
+        `Inscripción con ID ${feedback.inscripcionId} no encontrada.`,
+      );
+    }
+    const feedbackCreado = await this.feedbackRepository.create(feedback);
     await this.inscripcionRepository.updateById(feedback.inscripcionId, {
-      certificadoId: createdFeedback.id,
+      feedbackId: feedbackCreado.id,
     });
-
-    return createdFeedback;
+    return feedbackCreado;
   }
 
   @get('/feedback/count')

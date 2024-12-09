@@ -28,6 +28,7 @@ import {
   InscripcionRepository,
   NotificacionRepository,
   NotificacionxInscripcionRepository,
+  ParticipanteRepository,
 } from '../repositories';
 import {LogicaNegocioService, NotificacionesService} from '../services';
 
@@ -41,6 +42,8 @@ export class InscripcionController {
     public feedbackRepository: FeedbackRepository,
     @repository(EventoRepository)
     public eventoRepository: EventoRepository,
+    @repository(ParticipanteRepository)
+    public participanteRepository: ParticipanteRepository,
     @repository(NotificacionRepository)
     public notificacionRepository: NotificacionRepository,
     @repository(NotificacionxInscripcionRepository)
@@ -121,15 +124,28 @@ export class InscripcionController {
         );
       }
     }
+
     inscripcion.fecha = new Date().toISOString();
     inscripcion.asistencia = await this.servicioLogicaNegocio.obtenerQR(
       inscripcion.participanteId,
       inscripcion.eventoId,
     );
 
-    const participante = await this.inscripcionRepository.participante(
+    const participante = await this.participanteRepository.findById(
       inscripcion.participanteId,
     );
+
+    if (!participante) {
+      throw new HttpErrors.NotFound(
+        `El participante con ID ${inscripcion.participanteId} no existe.`,
+      );
+    }
+
+    if (!participante.correo) {
+      throw new HttpErrors.NotFound(
+        `El participante con ID ${inscripcion.participanteId} no tiene correo.`,
+      );
+    }
 
     // Enviar Qr al correo del participante
     try {

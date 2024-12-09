@@ -15,7 +15,7 @@ export class CodigoQrController {
     public inscripcionRepository: InscripcionRepository,
     @repository(EventoRepository)
     public eventoRepository: EventoRepository,
-  ) { }
+  ) {}
 
   @post('/codigo-qr/{participanteId}/{eventoId}')
   @response(200, {
@@ -37,7 +37,8 @@ export class CodigoQrController {
     @param.path.number('eventoId') eventoId: number,
   ): Promise<{qrCode: string}> {
     // Validar existencia del participante
-    const participante = await this.participanteRepository.findById(participanteId);
+    const participante =
+      await this.participanteRepository.findById(participanteId);
     if (!participante) {
       throw new HttpErrors.NotFound(
         `Participante con ID ${participanteId} no encontrado.`,
@@ -92,7 +93,12 @@ export class CodigoQrController {
     description: 'Registrar asistencia con código QR',
   })
   async registrarAsistencia(
-    @requestBody() requestData: {participanteId: number; eventoId: number; qrCode: string}
+    @requestBody()
+    requestData: {
+      participanteId: number;
+      eventoId: number;
+      qrCode: string;
+    },
   ): Promise<void> {
     const {participanteId, eventoId, qrCode} = requestData;
 
