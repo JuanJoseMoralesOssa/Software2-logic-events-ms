@@ -147,24 +147,25 @@ export class InscripcionController {
       );
     }
 
-  //   // Enviar Qr al correo del participante
-  // try{
-  //   let datos = {
-  //     correoDestino: participante.correo,
-  //     nombreDestino: participante.primerNombre + ' ' + participante.primerApellido,
-  //     asuntoCorreo: 'Codigo QR de asistencia',
-  //     contenidoCorreo: qrcode,
-  //   }
-  //   let url = NotificacionesConfig.urlNotificationQR;
-  //   console.log(datos);
-  //   try{
-  //     this.servicioNotificaciones.EnviarNotificacion(datos,url);
-  //   }catch(error){
-  //     console.error('Error al enviar notificación: ' + error.message);
-  //   }
-  // }catch(error){
-  //   console.error('Error al enviar notificación: ' + error.message);
-  // }
+    //   // Enviar Qr al correo del participante
+    try {
+      let datos = {
+        correoDestino: participante.correo,
+        nombreDestino:
+          participante.primerNombre + ' ' + participante.primerApellido,
+        asuntoCorreo: 'Codigo QR de asistencia',
+        contenidoCorreo: qrcode,
+      };
+      let url = NotificacionesConfig.urlNotificationQR;
+      console.log(datos);
+      try {
+        this.servicioNotificaciones.EnviarNotificacion(datos, url);
+      } catch (error) {
+        console.error('Error al enviar notificación: ' + error.message);
+      }
+    } catch (error) {
+      console.error('Error al enviar notificación: ' + error.message);
+    }
 
     // Crear la inscripción si no hay conflictos
     return this.inscripcionRepository.create(inscripcion);
