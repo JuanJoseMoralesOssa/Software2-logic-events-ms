@@ -15,7 +15,7 @@ export class NotificacionesService {
     } catch (error) {
       console.error(
         `Error al enviar notificación: ${error.message}, ` +
-          JSON.stringify(error.response.data),
+          JSON.stringify(error.response),
       );
       return false;
     }

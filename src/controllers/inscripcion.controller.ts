@@ -281,7 +281,7 @@ export class InscripcionController {
       await this.feedbackRepository.deleteById(inscripcion.feedbackId);
 
     if (inscripcion.certificadoId)
-      await this.inscripcionRepository.deleteById(inscripcion.certificadoId);
+      await this.certificadoRepository.deleteById(inscripcion.certificadoId);
 
     if (inscripcion.notificaciones && inscripcion.notificaciones.length > 0) {
       for (const notificacion of inscripcion.notificaciones) {
