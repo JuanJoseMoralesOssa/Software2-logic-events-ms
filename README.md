@@ -1,4 +1,34 @@
 # logic-events-ms
+## Descripción
+
+Microservicio de lógica de negocio para la gestión integral de eventos académicos y sus participantes.
+
+### Problema que resuelve
+
+Centraliza y automatiza la gestión de eventos, inscripciones, asistencia, certificados y notificaciones, facilitando la integración con otros servicios mediante una API REST.
+
+### Funcionalidades
+
+- Gestión de eventos, organizadores y participantes.
+- Registro y administración de inscripciones.
+- Generación y validación de códigos QR.
+- Registro de asistencia a eventos.
+- Generación de certificados de asistencia.
+- Envío de notificaciones mediante servicios externos.
+- Persistencia de información en MySQL.
+- Generación de documentación mediante OpenAPI.
+
+### Tecnologías utilizadas
+
+- Node.js
+- TypeScript
+- LoopBack 4
+- MySQL
+- Axios
+- QRCode
+- dotenv
+- Multer
+- Docker
 
 This application is generated using [LoopBack 4 CLI](https://loopback.io/doc/en/lb4/Command-line-interface.html) with the
 [initial project layout](https://loopback.io/doc/en/lb4/Loopback-application-layout.html).
